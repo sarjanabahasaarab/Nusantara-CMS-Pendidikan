@@ -1,0 +1,8 @@
+# Nusantara Education CMS - robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login
+
+Sitemap: https://sman-nusantara.sch.id/sitemap.xml

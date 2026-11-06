@@ -1,0 +1,50 @@
+# ==============================================================================
+# docker-compose.yml - Nusantara Education CMS Stack
+# PostgreSQL Database + CMS Application Container
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Relational Database Service
+  db:
+    image: postgres:16-alpine
+    container_name: nusantara-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nusantara_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nusantara_secret_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-nusantara_education_db}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nusantara_user -d nusantara_education_db']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Nusantara Education CMS Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nusantara-cms-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://nusantara_user:nusantara_secret_pass@db:5432/nusantara_education_db?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:-super-secret-auth-key-change-in-production}
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_NAME: 'SMA Negeri Nusantara Mandiri'
+      STORAGE_PROVIDER: local
+
+volumes:
+  postgres_data:
+    driver: local

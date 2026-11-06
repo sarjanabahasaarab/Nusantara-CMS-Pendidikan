@@ -1,0 +1,8 @@
+{
+  "name": "Nusantara Education CMS",
+  "description": "Sistem Manajemen Konten (CMS) dan Portal Pendidikan Terpadu untuk SD, SMP, SMA, SMK, dan Perguruan Tinggi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

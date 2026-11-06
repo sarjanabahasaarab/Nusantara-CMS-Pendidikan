@@ -1,0 +1,1254 @@
+// Nusantara Education CMS - Prisma Schema
+// Phase 3 - Advanced User Management, Educational Profiles & Granular RBAC
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// 1. PENGGUNA & RBAC (ROLE-BASED ACCESS CONTROL)
+// -----------------------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  PENDING_INVITE
+}
+
+model User {
+  id                  String      @id @default(uuid())
+  name                String
+  email               String      @unique
+  phone               String?
+  passwordHash        String
+  image               String?
+  role                String      @default("SISWA") // Primary Role (Backward compatible)
+  status              UserStatus  @default(ACTIVE)
+  isActive            Boolean     @default(true)
+  lastLoginAt         DateTime?
+  failedLoginAttempts Int         @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  // Relasi Kelembagaan & RBAC
+  userRoles           UserRole[]
+  teacherProfile      TeacherProfile?
+  studentProfile      StudentProfile?
+  parentProfile       ParentProfile?
+  staffProfile        StaffProfile?
+  sessions            UserSession[]
+  loginHistories      LoginHistory[]
+  resetTokens         PasswordResetToken[]
+  sentInvitations     Invitation[]        @relation("UserSentInvitations")
+
+  // Relasi Konten CMS (Phase 1 & 2)
+  posts               Post[]
+  uploadedMedia       Media[]
+  auditLogs           AuditLog[]
+  announcements       Announcement[]
+  events              Event[]
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique // SUPER_ADMIN, ADMIN_SEKOLAH, KEPALA_SEKOLAH, GURU, etc.
+  code        String           @unique
+  description String?          @db.Text
+  status      String           @default("ACTIVE") // ACTIVE, INACTIVE
+  isSystem    Boolean          @default(false)    // System roles cannot be deleted
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  name        String           @unique // e.g. "users.view", "grades.input"
+  description String?          @db.Text
+  module      String           @default("system")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@index([module])
+  @@map("permissions")
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+// -----------------------------------------------------------------------------
+// 2. PROFIL KELEMBAGAAN PENDIDIKAN (PHASE 3)
+// -----------------------------------------------------------------------------
+
+enum EmploymentStatus {
+  PNS
+  PPPK
+  HONORER
+  TETAP_YAYASAN
+  TIDAK_TETAP
+  KONTRAK
+}
+
+enum Gender {
+  L
+  P
+}
+
+enum StudentStatus {
+  AKTIF
+  PINDAH
+  LULUS
+  KELUAR
+  NONAKTIF
+}
+
+enum ParentRelationship {
+  AYAH
+  IBU
+  WALI
+}
+
+model TeacherProfile {
+  id               String           @id @default(uuid())
+  userId           String           @unique
+  nip              String?          @unique
+  nuptk            String?          @unique
+  fullName         String
+  birthPlace       String
+  birthDate        DateTime
+  gender           Gender
+  address          String           @db.Text
+  phone            String
+  email            String
+  education        String           // D3, S1, S2, S3
+  major            String           // Bidang studi / mata pelajaran keahlian
+  employmentStatus EmploymentStatus @default(HONORER)
+  startDate        DateTime
+  photo            String?
+  isActive         Boolean          @default(true)
+  notes            String?          @db.Text
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  homeroomClasses  HomeroomAssignment[]
+
+  @@index([nip])
+  @@index([nuptk])
+  @@index([employmentStatus])
+  @@map("teacher_profiles")
+}
+
+model StudentProfile {
+  id          String        @id @default(uuid())
+  userId      String        @unique
+  nis         String        @unique // Wajib unik per institusi
+  nisn        String?       @unique // Opsional unik nasional
+  fullName    String
+  birthPlace  String
+  birthDate   DateTime
+  gender      Gender
+  religion    String        @default("Islam")
+  address     String        @db.Text
+  phone       String?
+  email       String?
+  photo       String?
+  entryDate   DateTime      @default(now())
+  status      StudentStatus @default(AKTIF)
+  classId     String?
+  className   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parents     StudentParent[]
+
+  @@index([nis])
+  @@index([nisn])
+  @@index([status])
+  @@index([classId])
+  @@map("student_profiles")
+}
+
+model ParentProfile {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  fullName   String
+  phone      String
+  email      String
+  address    String   @db.Text
+  occupation String   // Pekerjaan orang tua
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  children   StudentParent[]
+
+  @@index([phone])
+  @@map("parent_profiles")
+}
+
+model StudentParent {
+  id                  String             @id @default(uuid())
+  studentId           String
+  parentId            String
+  relationship        ParentRelationship @default(WALI)
+  isPrimaryContact    Boolean            @default(false)
+  canViewAcademicData Boolean            @default(true)
+  createdAt           DateTime           @default(now())
+
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  parent  ParentProfile  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, parentId])
+  @@index([studentId])
+  @@index([parentId])
+  @@map("student_parents")
+}
+
+model StaffProfile {
+  id               String           @id @default(uuid())
+  userId           String           @unique
+  employeeNumber   String           @unique
+  department       String           // Unit kerja: Tata Usaha, Keuangan, Perpustakaan, dsb.
+  position         String           // Jabatan: TU, Operator, Bendahara, Pustakawan, Sarpras, Laboran
+  employmentStatus EmploymentStatus @default(TETAP_YAYASAN)
+  startDate        DateTime
+  phone            String
+  address          String           @db.Text
+  isActive         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([employeeNumber])
+  @@index([position])
+  @@map("staff_profiles")
+}
+
+model HomeroomAssignment {
+  id               String    @id @default(uuid())
+  teacherId        String
+  classId          String
+  className        String
+  academicYearId   String
+  academicYearName String
+  startDate        DateTime  @default(now())
+  endDate          DateTime?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  // Hanya boleh ada 1 wali kelas aktif per kelas dalam 1 tahun ajaran
+  @@unique([classId, academicYearId, isActive])
+  @@index([teacherId])
+  @@index([classId])
+  @@map("homeroom_assignments")
+}
+
+// -----------------------------------------------------------------------------
+// 3. KEAMANAN, UNDANGAN & SESI (PHASE 3)
+// -----------------------------------------------------------------------------
+
+model Invitation {
+  id        String   @id @default(uuid())
+  email     String
+  name      String?
+  token     String   @unique
+  roles     String   // Serialized JSON of RoleName[]
+  expiresAt DateTime
+  status    String   @default("PENDING") // PENDING, ACCEPTED, EXPIRED, REVOKED
+  invitedBy String
+  createdAt DateTime @default(now())
+  acceptedAt DateTime?
+
+  inviter User @relation("UserSentInvitations", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([token])
+  @@index([status])
+  @@map("invitations")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+
+model UserSession {
+  id           String   @id @default(uuid())
+  userId       String
+  sessionToken String   @unique
+  ipAddress    String?
+  userAgent    String?  @db.Text
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  lastActiveAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@map("user_sessions")
+}
+
+model LoginHistory {
+  id        String   @id @default(uuid())
+  userId    String?
+  email     String
+  ipAddress String
+  userAgent String   @db.Text
+  status    String   // SUCCESS, FAILED, BLOCKED
+  reason    String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([email])
+  @@index([createdAt])
+  @@map("login_histories")
+}
+
+// -----------------------------------------------------------------------------
+// 4. KONTEN & TAKSONOMI (PHASE 1 & 2)
+// -----------------------------------------------------------------------------
+
+model Category {
+  id              String     @id @default(uuid())
+  name            String
+  slug            String     @unique
+  description     String?    @db.Text
+  parentId        String?
+  image           String?
+  metaTitle       String?
+  metaDescription String?    @db.Text
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryHierarchy")
+  posts    Post[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Tag {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  postTags PostTag[]
+
+  @@index([slug])
+  @@map("tags")
+}
+
+model Post {
+  id              String    @id @default(uuid())
+  type            String    @default("ARTICLE") // ARTICLE atau NEWS
+  title           String
+  slug            String    @unique
+  excerpt         String?   @db.Text
+  content         String    @db.Text
+  featuredImage   String?
+  status          String    @default("DRAFT") // DRAFT, SCHEDULED, PUBLISHED, ARCHIVED, TRASHED
+  isFeatured      Boolean   @default(false)
+  authorId        String
+  categoryId      String?
+  publishedAt     DateTime?
+  scheduledAt     DateTime?
+  views           Int       @default(0)
+  
+  metaTitle       String?
+  metaDescription String?   @db.Text
+  canonicalUrl    String?
+  ogImage         String?
+  robotsIndex     Boolean   @default(true)
+  robotsFollow    Boolean   @default(true)
+  deletedAt       DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  postTags PostTag[]
+  comments Comment[]
+
+  @@index([slug])
+  @@index([type])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([scheduledAt])
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([isFeatured])
+  @@map("posts")
+}
+
+model PostTag {
+  id        String   @id @default(uuid())
+  postId    String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@index([postId])
+  @@index([tagId])
+  @@map("post_tags")
+}
+
+model Page {
+  id              String    @id @default(uuid())
+  title           String
+  slug            String    @unique
+  content         String    @db.Text
+  excerpt         String?   @db.Text
+  status          String    @default("PUBLISHED") // DRAFT, PUBLISHED, TRASHED
+  template        String    @default("default")
+  featuredImage   String?
+  metaTitle       String?
+  metaDescription String?   @db.Text
+  canonicalUrl    String?
+  robotsIndex     Boolean   @default(true)
+  robotsFollow    Boolean   @default(true)
+  deletedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@map("pages")
+}
+
+model Announcement {
+  id             String    @id @default(uuid())
+  title          String
+  slug           String    @unique
+  content        String    @db.Text
+  priority       String    @default("NORMAL") // NORMAL, IMPORTANT, URGENT
+  status         String    @default("PUBLISHED") // DRAFT, PUBLISHED, ARCHIVED
+  startDate      DateTime?
+  endDate        DateTime?
+  attachment     String?
+  attachmentName String?
+  authorId       String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([slug])
+  @@index([priority])
+  @@index([status])
+  @@map("announcements")
+}
+
+model Event {
+  id            String    @id @default(uuid())
+  title         String
+  slug          String    @unique
+  description   String    @db.Text
+  location      String
+  startDate     DateTime
+  endDate       DateTime?
+  allDay        Boolean   @default(false)
+  category      String?   @default("Akademik")
+  featuredImage String?
+  status        String    @default("PUBLISHED") // DRAFT, PUBLISHED, ARCHIVED
+  organizer     String?
+  authorId      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([slug])
+  @@index([startDate])
+  @@index([status])
+  @@map("events")
+}
+
+model GalleryAlbum {
+  id          String         @id @default(uuid())
+  title       String
+  slug        String         @unique
+  description String?        @db.Text
+  coverImage  String
+  status      String         @default("PUBLISHED") // DRAFT, PUBLISHED, ARCHIVED
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  photos GalleryPhoto[]
+
+  @@index([slug])
+  @@index([status])
+  @@map("gallery_albums")
+}
+
+model GalleryPhoto {
+  id        String   @id @default(uuid())
+  albumId   String
+  mediaId   String?
+  imageUrl  String
+  caption   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  album GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@index([albumId])
+  @@index([sortOrder])
+  @@map("gallery_photos")
+}
+
+model NavigationMenu {
+  id        String           @id @default(uuid())
+  label     String
+  url       String
+  parentId  String?
+  target    String           @default("_self")
+  icon      String?
+  sortOrder Int              @default(0)
+  isActive  Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  parent   NavigationMenu?  @relation("MenuHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children NavigationMenu[] @relation("MenuHierarchy")
+
+  @@index([parentId])
+  @@index([sortOrder])
+  @@map("navigation_menus")
+}
+
+model Comment {
+  id          String   @id @default(uuid())
+  contentId   String
+  authorName  String
+  authorEmail String
+  content     String   @db.Text
+  status      String   @default("PENDING")
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  post Post @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
+  @@index([status])
+  @@map("comments")
+}
+
+model Media {
+  id         String   @id @default(uuid())
+  fileName   String
+  fileUrl    String
+  mimeType   String
+  fileSize   Int
+  altText    String?
+  caption    String?
+  uploadedBy String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  uploader User @relation(fields: [uploadedBy], references: [id], onDelete: Restrict)
+
+  @@index([uploadedBy])
+  @@index([mimeType])
+  @@map("media")
+}
+
+model SiteSetting {
+  id                   String   @id @default("default")
+  institutionType      String   @default("SMA")
+  siteName             String
+  tagline              String?
+  description          String?  @db.Text
+  npsn                 String?
+  accreditation        String?  @default("Akreditasi Unggul (A)")
+  accreditationBody    String?  @default("BAN-PDM Kemendikbudristek")
+  logo                 String?
+  favicon              String?
+  heroImage            String?
+
+  principalName        String?
+  principalTitle       String?
+  principalImage       String?
+  principalQuote       String?  @db.Text
+  principalWelcomeMessage String? @db.Text
+
+  stat1Value           String?  @default("1.250+")
+  stat1Label           String?  @default("Peserta Didik Aktif")
+  stat2Value           String?  @default("85+")
+  stat2Label           String?  @default("Pendidik & Guru Ahli")
+  stat3Value           String?  @default("142+")
+  stat3Label           String?  @default("Prestasi Nasional & Global")
+  stat4Value           String?  @default("98.4%")
+  stat4Label           String?  @default("Lulusan PTN & Top Global Univ")
+
+  vision               String?  @db.Text
+  mission              String?  @db.Text
+  educationalPhilosophy String? @db.Text
+
+  ppdbActive           Boolean  @default(true)
+  ppdbNotice           String?
+  ppdbCtaText          String?  @default("Daftar PPDB Online")
+  ppdbCtaUrl           String?  @default("/kontak")
+
+  email                String?
+  phone                String?
+  whatsapp             String?
+  address              String?  @db.Text
+  workingHoursWeekday  String?  @default("Senin - Jumat: 07.30 - 15.30 WIB")
+  workingHoursWeekend  String?  @default("Sabtu: 08.00 - 12.00 WIB (Khusus Layanan PPDB)")
+  mapsEmbedUrl         String?  @db.Text
+
+  facebook             String?
+  instagram            String?
+  youtube              String?
+  tiktok               String?
+  twitter              String?
+
+  metaTitle            String?
+  metaDescription      String?  @db.Text
+  footerCopyright      String?
+  timezone             String?  @default("Asia/Jakarta")
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  userName  String?
+  userRole  String?
+  action    String
+  entity    String
+  entityId  String?
+  details   String?  @db.Text
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// -----------------------------------------------------------------------------
+// 7. MULTI-TENANT SAAS ARCHITECTURE (PHASE 4)
+// -----------------------------------------------------------------------------
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  PENDING_VERIFICATION
+}
+
+enum SubscriptionTier {
+  FREE
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model Tenant {
+  id               String       @id @default(uuid())
+  slug             String       @unique
+  name             String
+  institutionType  String       // SD, SMP, SMA, SMK, UNIVERSITAS, POLITEKNIK, etc.
+  category         String       @default("SEKOLAH") // SEKOLAH | KAMPUS | PONDOK | LEMBAGA
+  customDomain     String?      @unique
+  subdomain        String       @unique
+  status           TenantStatus @default(ACTIVE)
+  logo             String?
+  bannerImage      String?
+  npsnOrCode       String?
+  email            String?
+  phone            String?
+  address          String?      @db.Text
+  city             String?
+  province         String?
+  postalCode       String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  domains          TenantDomain[]
+  memberships      TenantMembership[]
+  settings         TenantSetting?
+  subscriptions    TenantSubscription[]
+  usages           TenantUsage[]
+  academicYears    AcademicYear[]
+  academicTerms    AcademicTerm[]
+  faculties        Faculty[]
+  departments      Department[]
+  studyPrograms    StudyProgram[]
+  gradeLevels      GradeLevel[]
+  academicClasses  AcademicClass[]
+  rooms            Room[]
+  subjects         Subject[]
+  curriculums      Curriculum[]
+  teachingAssignments TeachingAssignment[]
+  scheduleItems    ScheduleItem[]
+  learningDocuments LearningDocument[]
+  calendarEvents   AcademicCalendarEvent[]
+
+  @@index([slug])
+  @@index([subdomain])
+  @@index([institutionType])
+  @@index([status])
+  @@map("tenants")
+}
+
+model TenantDomain {
+  id         String   @id @default(uuid())
+  tenantId   String
+  domain     String   @unique
+  isPrimary  Boolean  @default(false)
+  isVerified Boolean  @default(false)
+  sslStatus  String   @default("ACTIVE") // ACTIVE, PENDING, ERROR
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("tenant_domains")
+}
+
+model TenantMembership {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  roleCode  String   // SUPER_ADMIN, ADMIN_SEKOLAH, GURU, SISWA, etc.
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, roleCode])
+  @@index([tenantId])
+  @@index([userId])
+  @@map("tenant_memberships")
+}
+
+model TenantSetting {
+  id                   String   @id @default(uuid())
+  tenantId             String   @unique
+  accentColor          String   @default("#1d4ed8")
+  activeAcademicYearId String?
+  activeAcademicTermId String?
+  currentCurriculumId  String?
+  enableStudentPortal  Boolean  @default(true)
+  enableParentPortal   Boolean  @default(true)
+  enableOnlinePPDB     Boolean  @default(true)
+  enableAttendanceSync Boolean  @default(true)
+  defaultTimezone      String   @default("Asia/Jakarta")
+  allowTeacherDocumentApproval Boolean @default(false)
+  maxUploadSizeMb      Int      @default(15)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_settings")
+}
+
+model TenantSubscription {
+  id             String           @id @default(uuid())
+  tenantId       String
+  tier           SubscriptionTier @default(FREE)
+  startDate      DateTime         @default(now())
+  endDate        DateTime?
+  status         String           @default("ACTIVE") // ACTIVE, TRIAL, EXPIRED, CANCELLED
+  maxUsers       Int              @default(100)
+  maxStudents    Int              @default(500)
+  maxStorageMb   Int              @default(5000)
+  customDomainAllowed Boolean     @default(false)
+  apiAccessAllowed   Boolean      @default(false)
+  whiteLabelAllowed  Boolean      @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("tenant_subscriptions")
+}
+
+model TenantUsage {
+  id            String   @id @default(uuid())
+  tenantId      String
+  userCount     Int      @default(0)
+  studentCount  Int      @default(0)
+  teacherCount  Int      @default(0)
+  storageUsedMb Float    @default(0)
+  postCount     Int      @default(0)
+  mediaCount    Int      @default(0)
+  recordedMonth String   // YYYY-MM
+  updatedAt     DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, recordedMonth])
+  @@index([tenantId])
+  @@map("tenant_usages")
+}
+
+// -----------------------------------------------------------------------------
+// 8. TAHUN AJARAN & SEMESTER (PHASE 4)
+// -----------------------------------------------------------------------------
+
+model AcademicYear {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String   // e.g. "2026/2027"
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+  status    String   @default("UPCOMING") // ACTIVE, CLOSED, UPCOMING
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  terms  AcademicTerm[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@index([isActive])
+  @@map("academic_years")
+}
+
+model AcademicTerm {
+  id             String       @id @default(uuid())
+  tenantId       String
+  academicYearId String
+  name           String       // "Semester Ganjil", "Semester Genap", "Semester Pendek"
+  termType       String       // ODD, EVEN, SHORT
+  startDate      DateTime
+  endDate        DateTime
+  isActive       Boolean      @default(false)
+  status         String       @default("UPCOMING") // ACTIVE, CLOSED, UPCOMING
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, academicYearId, name])
+  @@index([tenantId])
+  @@index([academicYearId])
+  @@index([isActive])
+  @@map("academic_terms")
+}
+
+// -----------------------------------------------------------------------------
+// 9. STRUKTUR AKADEMIK & SARANA (PHASE 4)
+// -----------------------------------------------------------------------------
+
+model Faculty {
+  id          String   @id @default(uuid())
+  tenantId    String
+  code        String
+  name        String
+  deanName    String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  departments Department[]
+  studyPrograms StudyProgram[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("faculties")
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  tenantId    String
+  facultyId   String?
+  code        String
+  name        String
+  headName    String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  faculty Faculty? @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  studyPrograms StudyProgram[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("departments")
+}
+
+model StudyProgram {
+  id          String   @id @default(uuid())
+  tenantId    String
+  facultyId   String?
+  departmentId String?
+  code        String
+  name        String   // e.g. "Teknik Informatika", "MIPA", "Rekayasa Perangkat Lunak"
+  degree      String   // S1, D3, D4, SMA, SMK
+  headName    String?
+  accreditation String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  faculty    Faculty?    @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  classes    AcademicClass[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("study_programs")
+}
+
+model GradeLevel {
+  id        String   @id @default(uuid())
+  tenantId  String
+  level     Int      // 1-12 or higher
+  code      String   // "X", "XI", "XII", "7", "8", "Tingkat 1"
+  name      String   // "Kelas 10 SMA", "Tingkat I Sarjana"
+  sequence  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classes AcademicClass[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("grade_levels")
+}
+
+model AcademicClass {
+  id             String   @id @default(uuid())
+  tenantId       String
+  gradeLevelId   String
+  studyProgramId String?
+  code           String   // e.g. "X-MIPA-1", "TI-2026-A"
+  name           String   // e.g. "Kelas X MIPA 1"
+  academicYearId String
+  homeroomTeacherId String?
+  roomId         String?
+  maxCapacity    Int      @default(36)
+  currentStudents Int     @default(0)
+  status         String   @default("ACTIVE")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  gradeLevel   GradeLevel    @relation(fields: [gradeLevelId], references: [id], onDelete: Restrict)
+  studyProgram StudyProgram? @relation(fields: [studyProgramId], references: [id], onDelete: SetNull)
+  room         Room?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+  teachingAssignments TeachingAssignment[]
+  scheduleItems       ScheduleItem[]
+
+  @@unique([tenantId, academicYearId, code])
+  @@index([tenantId])
+  @@index([academicYearId])
+  @@map("academic_classes")
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  tenantId    String
+  code        String   // "R-101", "LAB-KOMP-1", "AULA-UTAMA"
+  name        String
+  building    String?  // "Gedung A (Sains)", "Kampus Barat"
+  floor       Int?     @default(1)
+  capacity    Int      @default(40)
+  roomType    String   @default("CLASSROOM") // CLASSROOM, LAB_COMPUTER, LAB_SCIENCE, AUDITORIUM, WORKSHOP, LIBRARY
+  facilities  String?  // JSON array string of facilities
+  isAvailable Boolean  @default(true)
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classes       AcademicClass[]
+  scheduleItems ScheduleItem[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([roomType])
+  @@map("rooms")
+}
+
+// -----------------------------------------------------------------------------
+// 10. MATA PELAJARAN, KURIKULUM & PENUGASAN (PHASE 4)
+// -----------------------------------------------------------------------------
+
+model Subject {
+  id              String   @id @default(uuid())
+  tenantId        String
+  code            String   // "MAT-10", "TIF101"
+  name            String   // "Matematika Tingkat Lanjut", "Struktur Data & Algoritma"
+  category        String   // UMUM, WAJIB, PEMINATAN, KEJURUAN, PRAKTIKUM
+  creditHours     Int      @default(2) // Jam tatap muka per minggu / SKS
+  minPassingGrade Float    @default(75.0) // KKM
+  description     String?  @db.Text
+  prerequisites   String?  // JSON array string of prerequisite subject codes
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  curriculumSubjects  CurriculumSubject[]
+  teachingAssignments TeachingAssignment[]
+  scheduleItems       ScheduleItem[]
+  learningDocuments   LearningDocument[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([category])
+  @@map("subjects")
+}
+
+model Curriculum {
+  id             String   @id @default(uuid())
+  tenantId       String
+  code           String   // "KUR-MERDEKA-2026", "OBE-KAMPUS-2026"
+  name           String   // "Kurikulum Merdeka Mandiri Berbagi", "Kurikulum OBE 2026"
+  curriculumType String   // MERDEKA, K13, OBE, INTERNAL
+  versionYear    Int      @default(2026)
+  description    String?  @db.Text
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant   Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subjects CurriculumSubject[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("curriculums")
+}
+
+model CurriculumSubject {
+  id             String   @id @default(uuid())
+  curriculumId   String
+  subjectId      String
+  gradeLevelCode String?  // "X", "XI", "XII", "Semester 1"
+  learningOutcomes String? @db.Text // Capaian Pembelajaran (CP)
+  learningObjectives String? @db.Text // Tujuan Pembelajaran (TP)
+  hoursPerWeek   Int      @default(2)
+  isCompulsory   Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  curriculum Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  subject    Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([curriculumId, subjectId])
+  @@map("curriculum_subjects")
+}
+
+model TeachingAssignment {
+  id             String   @id @default(uuid())
+  tenantId       String
+  teacherId      String   // User ID
+  teacherName    String
+  subjectId      String
+  subjectName    String
+  classId        String
+  className      String
+  academicYearId String
+  academicTermId String?
+  hoursPerWeek   Int      @default(4)
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subject  Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  academic AcademicClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([teacherId])
+  @@index([classId])
+  @@index([academicYearId])
+  @@map("teaching_assignments")
+}
+
+// -----------------------------------------------------------------------------
+// 11. JADWAL, DOKUMEN & KALENDER AKADEMIK (PHASE 4)
+// -----------------------------------------------------------------------------
+
+model ScheduleItem {
+  id             String   @id @default(uuid())
+  tenantId       String
+  academicYearId String
+  academicTermId String
+  classId        String
+  className      String
+  subjectId      String
+  subjectName    String
+  teacherId      String
+  teacherName    String
+  roomId         String?
+  roomCode       String?
+  dayOfWeek      Int      // 1 = Senin, 2 = Selasa, ..., 6 = Sabtu, 7 = Minggu
+  startTime      String   // "07:30"
+  endTime        String   // "09:00"
+  timeSlotIndex  Int      @default(1)
+  sessionNotes   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant  Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  class   AcademicClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  room    Room?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([academicYearId, academicTermId])
+  @@index([dayOfWeek])
+  @@index([teacherId])
+  @@index([classId])
+  @@index([roomId])
+  @@map("schedule_items")
+}
+
+model LearningDocument {
+  id             String   @id @default(uuid())
+  tenantId       String
+  documentType   String   // SILABUS, RPP, MODUL_AJAR, RPS, BAHAN_AJAR
+  title          String
+  subjectId      String
+  subjectName    String
+  gradeLevel     String
+  authorId       String
+  authorName     String
+  version        Int      @default(1)
+  status         String   @default("DRAFT") // DRAFT, SUBMITTED, APPROVED, REVISION
+  curriculumCode String   @default("MERDEKA")
+  summary        String?  @db.Text
+  content        String?  @db.Text // JSON or rich text structure
+  fileUrl        String?
+  reviewedById   String?
+  reviewedByName String?
+  reviewedAt     DateTime?
+  revisionNotes  String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([authorId])
+  @@index([status])
+  @@index([subjectId])
+  @@map("learning_documents")
+}
+
+model AcademicCalendarEvent {
+  id             String   @id @default(uuid())
+  tenantId       String
+  academicYearId String?
+  title          String
+  category       String   // HOLIDAY, EXAM, ORIENTATION, REGISTRATION_PPDB, SEMESTER_BREAK, GRADUATION, CEREMONY, OTHER
+  startDate      DateTime
+  endDate        DateTime
+  isAllDay       Boolean  @default(true)
+  color          String   @default("#3b82f6")
+  location       String?
+  description    String?  @db.Text
+  targetAudience String   @default("ALL") // ALL, TEACHERS, STUDENTS, PARENTS, PUBLIC
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([startDate])
+  @@index([category])
+  @@map("academic_calendar_events")
+}
