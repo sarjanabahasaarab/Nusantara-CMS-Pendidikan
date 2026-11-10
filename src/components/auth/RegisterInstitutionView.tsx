@@ -23,10 +23,16 @@ import { cmsStore } from '../../lib/db';
 import { slugify } from '../../lib/utils';
 
 interface RegisterInstitutionViewProps {
-  onNavigate: (view: any) => void;
+  onNavigate?: (view: any) => void;
+  onSuccessLogin?: () => void;
+  onNavigateHome?: () => void;
 }
 
-export const RegisterInstitutionView: React.FC<RegisterInstitutionViewProps> = ({ onNavigate }) => {
+export const RegisterInstitutionView: React.FC<RegisterInstitutionViewProps> = ({ 
+  onNavigate,
+  onSuccessLogin,
+  onNavigateHome,
+}) => {
   const { switchTenant } = useAuth();
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -127,7 +133,10 @@ export const RegisterInstitutionView: React.FC<RegisterInstitutionViewProps> = (
             <p className="font-semibold text-slate-800">{adminEmail}</p>
           </div>
           <button
-            onClick={() => onNavigate('admin-academic-dashboard')}
+            onClick={() => {
+              if (onSuccessLogin) onSuccessLogin();
+              else onNavigate?.('admin-academic-dashboard');
+            }}
             className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition shadow-sm"
           >
             Masuk ke Dashboard Akademik
@@ -288,7 +297,10 @@ export const RegisterInstitutionView: React.FC<RegisterInstitutionViewProps> = (
               <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
                 <button
                   type="button"
-                  onClick={() => onNavigate('home')}
+                  onClick={() => {
+                    if (onNavigateHome) onNavigateHome();
+                    else onNavigate?.('home');
+                  }}
                   className="text-xs font-semibold text-slate-500 hover:text-slate-800"
                 >
                   Kembali ke Beranda

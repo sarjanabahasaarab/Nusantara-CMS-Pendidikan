@@ -1,4 +1,4 @@
-# 🎓 Nusantara Education CMS (Phase 4 — Multi-Tenant SaaS & Academic Curriculum)
+# 🎓 Nusantara Education CMS (Phase 5 — Absensi, Penilaian, Ujian CBT, & Rapor Multi-Tenant)
 
 > **Sistem Manajemen Konten (CMS) dan Platform Pendidikan SaaS Multi-Tenant Terpadu Terbuka (Open-Source)**  
 > Dirancang untuk SD, SMP, SMA, SMK, dan Perguruan Tinggi (Universitas, Politeknik, Akademi) di seluruh Indonesia.
@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
 [![Prisma ORM](https://img.shields.io/badge/Prisma-PostgreSQL-2D3748?logo=prisma)](https://www.prisma.io/)
-[![Vitest](https://img.shields.io/badge/Vitest-52%20Passed-449C44?logo=vitest)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-63%20Passed-449C44?logo=vitest)](https://vitest.dev/)
 
 ---
 
@@ -77,20 +77,13 @@ Gunakan email berikut untuk menguji hak akses spesifik (Password default: `Admin
 - [x] **Phase 1 (Selesai):** Fondasi Arsitektur, Website Publik, CMS Berita & Halaman, Media Library, RBAC 6 Role, Audit Log, Docker, dan SEO.
 - [x] **Phase 2 (Selesai):** CMS Konten Lengkap: Artikel & Berita terpadu, Kategori Berjenjang, Tag Many-to-Many, Status Konten (Draf, Terjadwal, Tayang, Sampah), Aksi Massal, Menu Builder Interaktif, Moderasi Komentar, Album Galeri & Lightbox, Agenda Detail, Pencarian Terpadu, dan Panduan Vercel.
 - [x] **Phase 3 (Selesai):** Advanced User Management & RBAC: 14 Role Pendidikan Bawaan, Multi-Role Union Evaluation, Profil Guru/NIP, Buku Induk Siswa/NIS, Relasi M:N Orang Tua-Siswa, Penugasan Wali Kelas 1-Active-Constraint, Tenaga Kependidikan TU/Bendahara/Perpustakaan/Sarpras, Undangan Akun 7-Hari, Reset Password Sekali-Pakai, Proteksi Brute-Force 5x Salah, Batch CSV Import/Export, dan Kebijakan Privasi Data Siswa.
-- [ ] **Phase 4:** Akademik & Raport Kurikulum Merdeka (KBM, Rombel, Jadwal Pelajaran, Presensi Kelas, Penilaian Sumatif/Formatif, dan Buku Raport).
-- [ ] **Phase 5:** Kesiswaan & Kedisiplinan (Poin Prestasi, Pelanggaran, Konseling BK, dan Ekstrakurikuler).
-- [ ] **Phase 6:** PPDB Online (Penerimaan Peserta Didik Baru Terpadu, Verifikasi Berkas, dan Seleksi Jalur Zonasi/Prestasi).
-- [ ] **Phase 7:** Keuangan Sekolah & Pembayaran SPP Online (Payment Gateway, Virtual Account, Rekap Tunggakan).
-- [ ] **Phase 8:** Perpustakaan Digital Terpadu (*E-Library* Barcode & Peminjaman Mandiri).
-- [ ] **Phase 9:** Sarana & Prasarana (Inventaris Ruang, Pemeliharaan Aset, Peminjaman Fasilitas).
-- [ ] **Phase 10:** Tata Usaha & Persuratan Elektronik (Disposisi Surat Masuk/Keluar, Tanda Tangan Digital).
-- [ ] **Phase 4:** Kesiswaan, Portal Siswa, Absensi Digital QR-Code, dan Poin Pelanggaran & Prestasi.
-- [ ] **Phase 5:** Penilaian Guru, E-Raport Kurikulum Merdeka, dan Cetak Lembar Hasil Belajar.
-- [ ] **Phase 6:** PPDB Online (Penerimaan Peserta Didik Baru), Verifikasi Berkas, dan Seleksi Jalur Prestasi/Zonasi.
-- [ ] **Phase 7:** Portal Orang Tua / Wali Murid & Notifikasi Kehadiran.
-- [ ] **Phase 8:** Modul Keuangan Sekolah, Tagihan SPP Terintegrasi Payment Gateway, dan Bukti Pembayaran Digital.
-- [ ] **Phase 9:** Perpustakaan Digital (*E-Library*), Peminjaman Buku Barcode, dan E-Book Interaktif.
-- [ ] **Phase 10:** Tata Usaha, Administrasi Surat Masuk/Keluar Elektronik, Tanda Tangan Digital Kepala Sekolah.
+- [x] **Phase 4 (Selesai):** Sistem Akademik & Kurikulum Multi-Tenant SaaS (Tenant Partitioning, Single-Active Academic Year, Rombel, Ruang Belajar, CP/TP Perangkat Ajar, Anti-Bentrok 3-Dimensi, dan Kalender Akademik).
+- [x] **Phase 5 (Selesai):** Sistem Absensi, Penilaian, Ujian CBT, & Rapor Multi-Tenant (Presensi 8 Status, Validasi Anti-Duplikasi Sesi, Check-In Pegawai, Surat Izin Berjenjang, Bobot Nilai & Kunci Nilai, Audit Revisi Nilai, Bank Soal Taksonomi Bloom, Mesin CBT 5 Tipe Soal, Rapor K-12 Approval Pipeline, KHS & Transkrip Kumulatif Kampus, Sidang Pleno Keputusan Akademik, Notifikasi Internal, serta Portal Mandiri Siswa & Orang Tua).
+- [ ] **Phase 6:** Kesiswaan, Poin Prestasi, Kedisiplinan & Pelanggaran, dan Konseling BK.
+- [ ] **Phase 7:** PPDB Online Terpadu (Zonasi, Afirmasi, Prestasi, dan Verifikasi Berkas Digital).
+- [ ] **Phase 8:** Keuangan Sekolah & Pembayaran SPP Online (Payment Gateway, Virtual Account).
+- [ ] **Phase 9:** Perpustakaan Digital (*E-Library* Barcode & Peminjaman Mandiri).
+- [ ] **Phase 10:** Sarana Prasarana & Tata Usaha Elektronik (Aset Fasilitas & Tanda Tangan Digital).
 
 ---
 

@@ -44,6 +44,12 @@ import {
   Sparkles,
   Clock,
   BookOpen,
+  CheckSquare,
+  UserMinus,
+  HelpCircle,
+  PenTool,
+  BookMarked,
+  TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { useTheme } from '../../lib/theme/ThemeContext';
@@ -142,7 +148,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           id: 'admin-academic-years',
           label: 'Tahun Ajaran & Semester',
           icon: Calendar,
-          permission: 'academic.years.manage',
+          permission: 'academicyears.manage',
         },
         {
           id: 'admin-academic-structure',
@@ -154,7 +160,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           id: 'admin-rooms',
           label: 'Ruangan & Sarpras',
           icon: DoorOpen,
-          permission: 'classes.manage',
+          permission: 'rooms.manage',
         },
         {
           id: 'admin-subjects',
@@ -172,7 +178,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           id: 'admin-teaching-assignments',
           label: 'Penugasan Guru (Beban 24J)',
           icon: GraduationCap,
-          permission: 'curriculum.manage',
+          permission: 'teachingassignments.manage',
         },
         {
           id: 'admin-schedules',
@@ -184,13 +190,94 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           id: 'admin-learning-docs',
           label: 'Perangkat Ajar (RPP/Modul)',
           icon: FileText,
-          permission: 'curriculum.manage',
+          permission: 'learningdocs.view',
         },
         {
           id: 'admin-academic-calendar',
           label: 'Kalender Akademik',
           icon: Calendar,
-          permission: 'academic.calendar.manage',
+          permission: 'academiccalendar.manage',
+        },
+      ],
+    },
+    {
+      groupName: 'Absensi & Kehadiran (Phase 5)',
+      items: [
+        {
+          id: 'admin-student-attendance',
+          label: 'Presensi Siswa / Mhs',
+          icon: CheckSquare,
+          permission: 'attendance.view',
+        },
+        {
+          id: 'admin-staff-attendance',
+          label: 'Presensi Guru & Pegawai',
+          icon: Clock,
+          permission: 'staffattendance.manage',
+        },
+        {
+          id: 'admin-leave-requests',
+          label: 'Izin, Sakit & Dispensasi',
+          icon: UserMinus,
+          permission: 'leaverequests.manage',
+        },
+      ],
+    },
+    {
+      groupName: 'Penilaian, Bank Soal & Ujian (Phase 5)',
+      items: [
+        {
+          id: 'admin-assessments',
+          label: 'Penilaian & Bobot Nilai',
+          icon: FileSpreadsheet,
+          permission: 'assessments.manage',
+        },
+        {
+          id: 'admin-question-bank',
+          label: 'Bank Soal Evaluasi',
+          icon: HelpCircle,
+          permission: 'questionbank.manage',
+        },
+        {
+          id: 'admin-examinations',
+          label: 'Jadwal & Pelaksanaan Ujian',
+          icon: PenTool,
+          permission: 'examinations.manage',
+        },
+      ],
+    },
+    {
+      groupName: 'Rapor, Transkrip & Keputusan (Phase 5)',
+      items: [
+        {
+          id: 'admin-report-cards',
+          label: 'Rapor Siswa (K-12)',
+          icon: BookMarked,
+          permission: 'reportcards.view',
+        },
+        {
+          id: 'admin-transcripts',
+          label: 'KHS & Transkrip Kampus',
+          icon: Award,
+          permission: 'transcripts.manage',
+        },
+        {
+          id: 'admin-academic-decisions',
+          label: 'Kenaikan Kelas & Kelulusan',
+          icon: TrendingUp,
+          permission: 'academicdecisions.manage',
+        },
+        {
+          id: 'admin-academic-reports',
+          label: 'Laporan Eksekutif Akademik',
+          icon: Activity,
+          permission: 'academicreports.view',
+        },
+        {
+          id: 'admin-notifications',
+          label: 'Notifikasi Akademik',
+          icon: Bell,
+          permission: 'notifications.view',
         },
       ],
     },

@@ -83,12 +83,18 @@ export const RoomsManagement: React.FC<RoomsManagementProps> = ({ onNavigate }) 
     setFormBuilding(room.building || '');
     setFormFloor(room.floor || 1);
     setFormCapacity(room.capacity);
-    setFormRoomType(room.roomType);
-    try {
-      const parsed = room.facilities ? JSON.parse(room.facilities) : [];
-      setFormFacilities(Array.isArray(parsed) ? parsed.join(', ') : '');
-    } catch {
-      setFormFacilities(room.facilities || '');
+    setFormRoomType(room.roomType || room.type || 'TEORI');
+    if (Array.isArray(room.facilities)) {
+      setFormFacilities(room.facilities.join(', '));
+    } else if (typeof room.facilities === 'string') {
+      try {
+        const parsed = JSON.parse(room.facilities);
+        setFormFacilities(Array.isArray(parsed) ? parsed.join(', ') : room.facilities);
+      } catch {
+        setFormFacilities(room.facilities);
+      }
+    } else {
+      setFormFacilities('');
     }
     setFormNotes(room.notes || '');
     setShowModal(true);
@@ -203,10 +209,15 @@ export const RoomsManagement: React.FC<RoomsManagementProps> = ({ onNavigate }) 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredRooms.map((room) => {
           let facilities: string[] = [];
-          try {
-            facilities = room.facilities ? JSON.parse(room.facilities) : [];
-          } catch {
-            facilities = [];
+          if (Array.isArray(room.facilities)) {
+            facilities = room.facilities;
+          } else if (typeof room.facilities === 'string') {
+            try {
+              const parsed = JSON.parse(room.facilities);
+              facilities = Array.isArray(parsed) ? parsed : [room.facilities];
+            } catch {
+              facilities = [room.facilities];
+            }
           }
 
           return (
@@ -218,7 +229,7 @@ export const RoomsManagement: React.FC<RoomsManagementProps> = ({ onNavigate }) 
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                      {getRoomIcon(room.roomType)}
+                      {getRoomIcon(room.roomType || room.type || '')}
                     </div>
                     <div>
                       <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">

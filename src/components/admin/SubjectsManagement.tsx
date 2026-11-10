@@ -21,7 +21,7 @@ import { cmsStore } from '../../lib/db';
 import { Subject } from '../../types';
 
 interface SubjectsManagementProps {
-  onNavigate: (view: any) => void;
+  onNavigate?: (view: any) => void;
 }
 
 export const SubjectsManagement: React.FC<SubjectsManagementProps> = ({ onNavigate }) => {
@@ -74,8 +74,8 @@ export const SubjectsManagement: React.FC<SubjectsManagementProps> = ({ onNaviga
     setFormCode(subj.code);
     setFormName(subj.name);
     setFormCategory(subj.category as any);
-    setFormCredits(subj.creditHours);
-    setFormPassingGrade(subj.minPassingGrade);
+    setFormCredits(subj.creditHours || subj.credits || 2);
+    setFormPassingGrade(subj.minPassingGrade ?? 75);
     setFormDescription(subj.description || '');
     setShowModal(true);
   };

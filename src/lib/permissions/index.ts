@@ -649,6 +649,114 @@ export const SYSTEM_PERMISSIONS: PermissionDefinition[] = [
     description: 'Menambah dan memperbarui agenda kalender akademik institusi',
     module: 'Kalender Akademik',
   },
+
+  // 21. Absensi & Kehadiran (Phase 5)
+  {
+    code: 'academic.view',
+    label: 'Lihat Menu Akademik',
+    description: 'Akses menu navigasi modul akademik institusi',
+    module: 'Akademik',
+  },
+  {
+    code: 'classes.manage',
+    label: 'Kelola Kelas & Rombel',
+    description: 'Mengelola rombongan belajar dan kelompok perkuliahan',
+    module: 'Akademik',
+  },
+  {
+    code: 'attendance.recap',
+    label: 'Rekap Presensi Siswa',
+    description: 'Melihat rekapitulasi kehadiran bulanan, semester, dan cetak lembar presensi',
+    module: 'Presensi',
+  },
+  {
+    code: 'staffattendance.manage',
+    label: 'Kelola Presensi Pegawai',
+    description: 'Mencatat dan merekap kehadiran guru dan tenaga kependidikan',
+    module: 'Presensi',
+  },
+  {
+    code: 'leaverequests.manage',
+    label: 'Kelola Pengajuan Izin/Sakit',
+    description: 'Memproses persetujuan surat permohonan izin atau sakit',
+    module: 'Presensi',
+  },
+
+  // 22. Penilaian, Bank Soal & Ujian (Phase 5)
+  {
+    code: 'assessments.manage',
+    label: 'Kelola Komponen Penilaian',
+    description: 'Mengatur komponen, bobot nilai, dan tujuan pembelajaran CP/TP',
+    module: 'Penilaian',
+  },
+  {
+    code: 'grades.lock',
+    label: 'Kunci / Buka Kunci Nilai',
+    description: 'Mengunci nilai akhir agar tidak dapat diubah tanpa izin revisi',
+    module: 'Penilaian',
+  },
+  {
+    code: 'questionbank.manage',
+    label: 'Kelola Bank Soal',
+    description: 'Membuat bank soal, butir soal PG, PGK, Esai, dan Menjodohkan',
+    module: 'Evaluasi',
+  },
+  {
+    code: 'examinations.manage',
+    label: 'Kelola Jadwal & Pelaksanaan Ujian',
+    description: 'Menyusun ujian online/offline, jadwal, timer, dan pengawas',
+    module: 'Evaluasi',
+  },
+  {
+    code: 'examinations.take',
+    label: 'Mengikuti Ujian Online',
+    description: 'Akses pengerjaan ujian daring berbasis komputer (CBT)',
+    module: 'Evaluasi',
+  },
+
+  // 23. Rapor, Transkrip & Keputusan Akademik (Phase 5)
+  {
+    code: 'reportcards.view',
+    label: 'Lihat Rapor Sekolah',
+    description: 'Melihat lembar hasil belajar rapor siswa K-12',
+    module: 'Rapor',
+  },
+  {
+    code: 'reportcards.create',
+    label: 'Buat & Generate Rapor',
+    description: 'Membuat dan menghitung nilai capaian rapor siswa',
+    module: 'Rapor',
+  },
+  {
+    code: 'reportcards.approve',
+    label: 'Verifikasi & TTD Rapor',
+    description: 'Menyetujui dan mengesahkan publikasi rapor oleh Wali Kelas / Kepsek',
+    module: 'Rapor',
+  },
+  {
+    code: 'transcripts.manage',
+    label: 'Kelola KHS & Transkrip Perguruan Tinggi',
+    description: 'Mencetak Kartu Hasil Studi, SKS, IPS, IPK, dan Transkrip Nilai Kampus',
+    module: 'Transkrip',
+  },
+  {
+    code: 'academicdecisions.manage',
+    label: 'Kelola Kenaikan Kelas & Kelulusan',
+    description: 'Menetapkan rapat pleno kenaikan rombel dan kelulusan alumni',
+    module: 'Keputusan Akademik',
+  },
+  {
+    code: 'academicreports.view',
+    label: 'Lihat Laporan Eksekutif Akademik',
+    description: 'Melihat visualisasi statistik nilai, ketuntasan, dan tren presensi',
+    module: 'Laporan',
+  },
+  {
+    code: 'notifications.view',
+    label: 'Lihat Notifikasi Akademik',
+    description: 'Menerima pemberitahuan agenda, presensi, dan status pengajuan izin',
+    module: 'Notifikasi',
+  },
 ];
 
 export const FUTURE_MODULE_PERMISSIONS: { module: string; codes: string[] }[] = [
@@ -1167,6 +1275,40 @@ export function canAccessAdminRoute(
       return hasPermission(user, 'learningdocs.view', customRolePermissions);
     case 'admin-academic-calendar':
       return hasPermission(user, 'academiccalendar.view', customRolePermissions);
+
+    // Absensi & Kehadiran (Phase 5)
+    case 'admin-student-attendance':
+      return hasAnyPermission(user, ['attendance.view', 'attendance.mark'], customRolePermissions);
+    case 'admin-staff-attendance':
+      return hasPermission(user, 'staffattendance.manage', customRolePermissions);
+    case 'admin-leave-requests':
+      return hasAnyPermission(user, ['leaverequests.manage', 'attendance.view'], customRolePermissions);
+
+    // Penilaian, Bank Soal, Ujian (Phase 5)
+    case 'admin-assessments':
+      return hasAnyPermission(user, ['assessments.manage', 'grades.view', 'grades.input'], customRolePermissions);
+    case 'admin-question-bank':
+      return hasPermission(user, 'questionbank.manage', customRolePermissions);
+    case 'admin-examinations':
+      return hasAnyPermission(user, ['examinations.manage', 'examinations.take'], customRolePermissions);
+
+    // Rapor, Transkrip & Keputusan Akademik (Phase 5)
+    case 'admin-report-cards':
+      return hasAnyPermission(user, ['reportcards.view', 'reportcards.create', 'reportcards.approve'], customRolePermissions);
+    case 'admin-transcripts':
+      return hasPermission(user, 'transcripts.manage', customRolePermissions);
+    case 'admin-academic-decisions':
+      return hasPermission(user, 'academicdecisions.manage', customRolePermissions);
+    case 'admin-academic-reports':
+      return hasPermission(user, 'academicreports.view', customRolePermissions);
+    case 'admin-notifications':
+      return hasPermission(user, 'notifications.view', customRolePermissions);
+
+    // Portals (Phase 5)
+    case 'portal-student':
+      return assignedRoles.includes('SISWA') || assignedRoles.includes('SUPER_ADMIN') || assignedRoles.includes('ADMIN_SEKOLAH');
+    case 'portal-parent':
+      return assignedRoles.includes('ORANG_TUA') || assignedRoles.includes('SUPER_ADMIN') || assignedRoles.includes('ADMIN_SEKOLAH');
 
     default:
       return true;

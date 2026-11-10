@@ -19,10 +19,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { cmsStore } from '../../lib/db';
-import { AcademicClass, GradeLevel, StudyProgram, Faculty, Department } from '../../types';
+import { AcademicClass, GradeLevel, StudyProgram, Faculty, Department, TeacherProfile } from '../../types';
 
 interface AcademicStructureManagementProps {
-  onNavigate: (view: any) => void;
+  onNavigate?: (view: any) => void;
 }
 
 export const AcademicStructureManagement: React.FC<AcademicStructureManagementProps> = ({ onNavigate }) => {
@@ -37,7 +37,7 @@ export const AcademicStructureManagement: React.FC<AcademicStructureManagementPr
   const [programs, setPrograms] = useState<StudyProgram[]>(cmsStore.getStudyPrograms(tenantId));
   const [faculties, setFaculties] = useState<Faculty[]>(cmsStore.getFaculties(tenantId));
   const [rooms] = useState(cmsStore.getRooms(tenantId));
-  const [teachers] = useState(cmsStore.getTeachers());
+  const [teachers] = useState<TeacherProfile[]>(cmsStore.getTeachers());
   const [academicYears] = useState(cmsStore.getAcademicYears(tenantId));
   const currentAy = cmsStore.getActiveAcademicYear(tenantId);
 
@@ -241,7 +241,7 @@ export const AcademicStructureManagement: React.FC<AcademicStructureManagementPr
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Wali Kelas / Dosen PA:</span>
-                      <span className="font-semibold text-slate-800">{homeroom?.name || 'Belum Ditetapkan'}</span>
+                      <span className="font-semibold text-slate-800">{homeroom?.fullName || 'Belum Ditetapkan'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Ruangan Kelas:</span>
@@ -425,7 +425,7 @@ export const AcademicStructureManagement: React.FC<AcademicStructureManagementPr
                     <option value="">-- Pilih Guru / Dosen --</option>
                     {teachers.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.name}
+                        {t.fullName}
                       </option>
                     ))}
                   </select>

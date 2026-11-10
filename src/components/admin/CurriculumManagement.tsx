@@ -22,7 +22,7 @@ import { cmsStore } from '../../lib/db';
 import { Curriculum, CurriculumSubject, Subject } from '../../types';
 
 interface CurriculumManagementProps {
-  onNavigate: (view: any) => void;
+  onNavigate?: (view: any) => void;
 }
 
 export const CurriculumManagement: React.FC<CurriculumManagementProps> = ({ onNavigate }) => {

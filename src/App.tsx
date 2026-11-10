@@ -78,6 +78,21 @@ import { SchedulingManagement } from './components/admin/SchedulingManagement';
 import { LearningDocsManagement } from './components/admin/LearningDocsManagement';
 import { AcademicCalendarManagement } from './components/admin/AcademicCalendarManagement';
 
+// Phase 5 Attendance, Assessments, Examinations, Report Cards & Portals
+import { StudentAttendanceManagement } from './components/admin/StudentAttendanceManagement';
+import { StaffAttendanceManagement } from './components/admin/StaffAttendanceManagement';
+import { LeaveRequestsManagement } from './components/admin/LeaveRequestsManagement';
+import { AssessmentsManagement } from './components/admin/AssessmentsManagement';
+import { QuestionBankManagement } from './components/admin/QuestionBankManagement';
+import { ExaminationsManagement } from './components/admin/ExaminationsManagement';
+import { ReportCardManagement } from './components/admin/ReportCardManagement';
+import { UniversityGradesManagement } from './components/admin/UniversityGradesManagement';
+import { AcademicDecisionsManagement } from './components/admin/AcademicDecisionsManagement';
+import { AcademicReportsView } from './components/admin/AcademicReportsView';
+import { NotificationsView } from './components/admin/NotificationsView';
+import { StudentAcademicPortal } from './components/portal/StudentAcademicPortal';
+import { ParentAcademicPortal } from './components/portal/ParentAcademicPortal';
+
 import { Badge } from './components/ui/Badge';
 import { Button } from './components/ui/Button';
 import { Eye, ArrowLeft } from 'lucide-react';
@@ -174,6 +189,8 @@ function MainRouter() {
     setCurrentNav(nav);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const onNavString = (nav: string) => handleNavigate(nav as ActiveNav);
 
   const selectedPost: Post | undefined = activeSlug
     ? storeState.posts.find((p) => p.slug === activeSlug)
@@ -432,64 +449,160 @@ function MainRouter() {
 
         {/* Phase 4: Manajemen Multi-Tenant SaaS */}
         {currentNav === 'admin-tenants' && (
-          <TenantsManagement />
+          <TenantsManagement onNavigate={handleNavigate} />
         )}
 
         {/* Phase 4: Langganan & Kuota Tenant */}
         {currentNav === 'admin-subscriptions' && (
-          <SubscriptionsManagement />
+          <SubscriptionsManagement onNavigate={handleNavigate} />
         )}
 
         {/* Phase 4: Identitas & Profil Resmi Institusi */}
         {currentNav === 'admin-institution-profile' && (
-          <InstitutionProfileView />
+          <InstitutionProfileView onNavigate={handleNavigate} />
         )}
 
         {/* Phase 4: Tahun Ajaran & Semester */}
         {currentNav === 'admin-academic-years' && (
-          <AcademicYearsManagement />
+          <AcademicYearsManagement onNavigate={handleNavigate} />
         )}
 
         {/* Phase 4: Struktur Akademik, Tingkat, Jurusan & Rombel */}
         {currentNav === 'admin-academic-structure' && (
-          <AcademicStructureManagement />
+          <AcademicStructureManagement onNavigate={handleNavigate} />
         )}
 
         {/* Phase 4: Ruangan & Sarpras */}
         {currentNav === 'admin-rooms' && (
-          <RoomsManagement />
+          <RoomsManagement onNavigate={handleNavigate} />
         )}
 
         {/* Phase 4: Mata Pelajaran & Kursus */}
         {currentNav === 'admin-subjects' && (
-          <SubjectsManagement />
+          <SubjectsManagement onNavigate={handleNavigate} />
         )}
 
         {/* Phase 4: Kurikulum & Capaian (CP/TP) */}
         {currentNav === 'admin-curriculum' && (
-          <CurriculumManagement />
+          <CurriculumManagement onNavigate={handleNavigate} />
         )}
 
         {/* Phase 4: Distribusi & Beban Mengajar Guru */}
         {currentNav === 'admin-teaching-assignments' && (
-          <TeachingAssignmentsManagement />
+          <TeachingAssignmentsManagement onNavigate={handleNavigate} />
         )}
 
         {/* Phase 4: Jadwal Pelajaran & Anti-Tabrakan */}
         {currentNav === 'admin-schedules' && (
-          <SchedulingManagement />
+          <SchedulingManagement onNavigate={handleNavigate} />
         )}
 
         {/* Phase 4: Perangkat Ajar (RPP, Modul, Silabus, RPS) */}
         {currentNav === 'admin-learning-docs' && (
-          <LearningDocsManagement />
+          <LearningDocsManagement onNavigate={handleNavigate} />
         )}
 
         {/* Phase 4: Kalender Akademik */}
         {currentNav === 'admin-academic-calendar' && (
-          <AcademicCalendarManagement />
+          <AcademicCalendarManagement onNavigate={handleNavigate} />
+        )}
+
+        {/* Phase 5: Presensi Siswa & Rekap */}
+        {currentNav === 'admin-student-attendance' && (
+          <StudentAttendanceManagement onNavigate={onNavString} />
+        )}
+
+        {/* Phase 5: Presensi Guru & Staf */}
+        {currentNav === 'admin-staff-attendance' && (
+          <StaffAttendanceManagement onNavigate={onNavString} />
+        )}
+
+        {/* Phase 5: Izin & Cuti */}
+        {currentNav === 'admin-leave-requests' && (
+          <LeaveRequestsManagement onNavigate={onNavString} />
+        )}
+
+        {/* Phase 5: Penilaian, Bobot & Kunci Nilai */}
+        {currentNav === 'admin-assessments' && (
+          <AssessmentsManagement onNavigate={onNavString} />
+        )}
+
+        {/* Phase 5: Bank Soal & Butir Soal */}
+        {currentNav === 'admin-question-bank' && (
+          <QuestionBankManagement onNavigate={onNavString} />
+        )}
+
+        {/* Phase 5: Jadwal Ujian & CBT Engine */}
+        {currentNav === 'admin-examinations' && (
+          <ExaminationsManagement onNavigate={onNavString} />
+        )}
+
+        {/* Phase 5: Rapor Siswa & Pengesahan */}
+        {currentNav === 'admin-report-cards' && (
+          <ReportCardManagement onNavigate={onNavString} />
+        )}
+
+        {/* Phase 5: KHS & Transkrip Perguruan Tinggi */}
+        {currentNav === 'admin-transcripts' && (
+          <UniversityGradesManagement onNavigate={onNavString} />
+        )}
+
+        {/* Phase 5: Kenaikan Kelas & Kelulusan (Sidang Pleno) */}
+        {currentNav === 'admin-academic-decisions' && (
+          <AcademicDecisionsManagement onNavigate={onNavString} />
+        )}
+
+        {/* Phase 5: Laporan Eksekutif & Analitik */}
+        {currentNav === 'admin-academic-reports' && (
+          <AcademicReportsView onNavigate={onNavString} />
+        )}
+
+        {/* Phase 5: Pusat Notifikasi */}
+        {currentNav === 'admin-notifications' && (
+          <NotificationsView onNavigate={onNavString} />
         )}
       </AdminLayout>
+    );
+  }
+
+  // ===========================================================================
+  // RENDER DEDICATED STUDENT & PARENT PORTALS
+  // ===========================================================================
+  if (currentNav === 'portal-student') {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="mb-4 flex items-center justify-between">
+            <button
+              onClick={() => handleNavigate('home')}
+              className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600"
+            >
+              <ArrowLeft className="w-4 h-4" /> Kembali ke Beranda
+            </button>
+            <span className="text-xs font-bold text-slate-700">{storeState.settings.siteName}</span>
+          </div>
+          <StudentAcademicPortal onNavigate={onNavString} />
+        </div>
+      </div>
+    );
+  }
+
+  if (currentNav === 'portal-parent') {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="mb-4 flex items-center justify-between">
+            <button
+              onClick={() => handleNavigate('home')}
+              className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-emerald-600"
+            >
+              <ArrowLeft className="w-4 h-4" /> Kembali ke Beranda
+            </button>
+            <span className="text-xs font-bold text-slate-700">{storeState.settings.siteName}</span>
+          </div>
+          <ParentAcademicPortal onNavigate={onNavString} />
+        </div>
+      </div>
     );
   }
 

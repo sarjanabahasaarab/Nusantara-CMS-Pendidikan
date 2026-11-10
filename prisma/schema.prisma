@@ -1252,3 +1252,409 @@ model AcademicCalendarEvent {
   @@index([category])
   @@map("academic_calendar_events")
 }
+
+// -----------------------------------------------------------------------------
+// 21. PHASE 5: SISTEM ABSENSI & PRESENSI MULTI-TENANT
+// -----------------------------------------------------------------------------
+
+model AttendanceSession {
+  id             String   @id @default(uuid())
+  tenantId       String
+  academicYearId String
+  semesterId     String
+  classId        String
+  subjectId      String?
+  teacherId      String
+  date           DateTime
+  sessionType    String   @default("DAILY") // DAILY, SUBJECT, LESSON_SLOT, LECTURE_GROUP
+  periodNumber   Int?
+  notes          String?  @db.Text
+  status         String   @default("COMPLETED") // OPEN, COMPLETED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  records        StudentAttendance[]
+
+  @@unique([tenantId, classId, date, sessionType, subjectId, periodNumber])
+  @@index([tenantId])
+  @@index([classId])
+  @@index([teacherId])
+  @@index([date])
+  @@map("attendance_sessions")
+}
+
+model StudentAttendance {
+  id             String            @id @default(uuid())
+  tenantId       String
+  sessionId      String
+  studentId      String
+  status         String            @default("HADIR") // HADIR, SAKIT, IZIN, ALPA, TERLAMBAT, DISPENSASI, DINAS, LIBUR
+  checkInTime    DateTime?
+  lateMinutes    Int?              @default(0)
+  notes          String?
+  excusedReason  String?
+  attachmentUrl  String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  session        AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
+  @@index([tenantId])
+  @@index([studentId])
+  @@index([status])
+  @@map("student_attendance")
+}
+
+model StaffAttendance {
+  id             String   @id @default(uuid())
+  tenantId       String
+  staffId        String
+  staffType      String   @default("TEACHER") // TEACHER, ADMIN_STAFF, STAFF
+  date           DateTime
+  checkInTime    DateTime
+  checkOutTime   DateTime?
+  status         String   @default("HADIR")
+  lateMinutes    Int?     @default(0)
+  notes          String?
+  location       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([tenantId, staffId, date])
+  @@index([tenantId])
+  @@index([staffId])
+  @@index([date])
+  @@map("staff_attendance")
+}
+
+model LeaveRequest {
+  id             String    @id @default(uuid())
+  tenantId       String
+  requesterType  String    // STUDENT, TEACHER, STAFF, PARENT
+  requesterId    String
+  studentId      String?
+  classId        String?
+  type           String    // SAKIT, IZIN, DISPENSASI, CUTI
+  startDate      DateTime
+  endDate        DateTime
+  totalDays      Int       @default(1)
+  reason         String    @db.Text
+  attachmentUrl  String?
+  status         String    @default("MENUNGGU") // MENUNGGU, DISETUJUI, DITOLAK, DIBATALKAN
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  reviewNotes    String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([requesterId])
+  @@index([studentId])
+  @@index([status])
+  @@map("leave_requests")
+}
+
+// -----------------------------------------------------------------------------
+// 22. PHASE 5: SISTEM PENILAIAN, CP/TP, DAN REVISI NILAI
+// -----------------------------------------------------------------------------
+
+model AssessmentComponent {
+  id              String   @id @default(uuid())
+  tenantId        String
+  academicYearId  String
+  semesterId      String
+  subjectId       String
+  classId         String?
+  name            String
+  code            String
+  type            String   // TUGAS, KUIS, ULANGAN_HARIAN, PRAKTIK, PROYEK, PORTOFOLIO, PTS_ASTS, PAS_ASAS, UTS, UAS
+  weight          Float    @default(10.0) // Bobot persentase
+  minPassingScore Float    @default(75.0) // KKM
+  description     String?  @db.Text
+  cpTpCode        String?
+  cpTpDescription String?  @db.Text
+  isHigherEd      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  grades          StudentAssessment[]
+
+  @@index([tenantId])
+  @@index([subjectId])
+  @@index([classId])
+  @@map("assessment_components")
+}
+
+model StudentAssessment {
+  id           String              @id @default(uuid())
+  tenantId     String
+  componentId  String
+  studentId    String
+  score        Float               // 0.0 - 100.0
+  feedback     String?
+  isLocked     Boolean             @default(false)
+  lockedBy     String?
+  lockedAt     DateTime?
+  gradedBy     String?
+  gradedAt     DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  component    AssessmentComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
+  revisions    GradeRevision[]
+
+  @@unique([componentId, studentId])
+  @@index([tenantId])
+  @@index([studentId])
+  @@map("student_assessments")
+}
+
+model GradeRevision {
+  id                  String            @id @default(uuid())
+  tenantId            String
+  studentAssessmentId String
+  studentId           String
+  componentId         String
+  oldScore            Float
+  newScore            Float
+  reason              String            @db.Text
+  changedBy           String
+  changedByName       String
+  createdAt           DateTime          @default(now())
+
+  studentAssessment   StudentAssessment @relation(fields: [studentAssessmentId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([studentAssessmentId])
+  @@map("grade_revisions")
+}
+
+// -----------------------------------------------------------------------------
+// 23. PHASE 5: BANK SOAL & EVALUASI / UJIAN ONLINE
+// -----------------------------------------------------------------------------
+
+model QuestionBank {
+  id             String   @id @default(uuid())
+  tenantId       String
+  subjectId      String
+  name           String
+  description    String?  @db.Text
+  gradeLevel     String
+  createdBy      String
+  totalQuestions Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  questions      Question[]
+
+  @@index([tenantId])
+  @@index([subjectId])
+  @@map("question_banks")
+}
+
+model Question {
+  id             String        @id @default(uuid())
+  tenantId       String
+  bankId         String?
+  subjectId      String
+  gradeLevel     String
+  questionType   String        // PILIHAN_GANDA, PILIHAN_GANDA_KOMPLEKS, BENAR_SALAH, ISIAN_SINGKAT, ESAI, MENJODOHKAN
+  content        String        @db.Text
+  imageUrl       String?
+  options        Json?         // Pilihan opsi [{key, text, isCorrect, matchPair}]
+  correctAnswers Json?         // Array kunci jawaban
+  matchPairs     Json?         // Pasangan kiri-kanan
+  explanation    String?       @db.Text
+  difficulty     String        @default("SEDANG") // MUDAH, SEDANG, SULIT
+  cognitiveLevel String?       @default("C3_MENERAPKAN")
+  scoreWeight    Float         @default(10.0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  bank           QuestionBank? @relation(fields: [bankId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([subjectId])
+  @@index([questionType])
+  @@map("questions")
+}
+
+model Examination {
+  id                  String           @id @default(uuid())
+  tenantId            String
+  academicYearId      String
+  semesterId          String
+  subjectId           String
+  classIds            Json             // Array of classId
+  title               String
+  code                String
+  description         String?          @db.Text
+  mode                String           @default("ONLINE") // ONLINE, OFFLINE, HYBRID
+  status              String           @default("DRAFT")  // DRAFT, PUBLISHED, ONGOING, COMPLETED, ARCHIVED
+  startTime           DateTime
+  endTime             DateTime
+  durationMinutes     Int              @default(60)
+  passingGrade        Float            @default(75.0)
+  shuffleQuestions    Boolean          @default(true)
+  shuffleOptions      Boolean          @default(true)
+  maxAttempts         Int              @default(1)
+  questionIds         Json             // Array of question ID
+  supervisorTeacherId String?
+  isHigherEd          Boolean          @default(false)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  submissions         ExamSubmission[]
+
+  @@index([tenantId])
+  @@index([subjectId])
+  @@index([status])
+  @@map("examinations")
+}
+
+model ExamSubmission {
+  id              String      @id @default(uuid())
+  tenantId        String
+  examId          String
+  studentId       String
+  startedAt       DateTime    @default(now())
+  submittedAt     DateTime?
+  durationSeconds Int?
+  answers         Json        // Map questionId -> { selectedOptionIds, textAnswer, isCorrect, scoreEarned }
+  objectiveScore  Float?      @default(0.0)
+  essayScore      Float?      @default(0.0)
+  totalScore      Float?      @default(0.0)
+  isPassed        Boolean?    @default(false)
+  status          String      @default("IN_PROGRESS") // NOT_STARTED, IN_PROGRESS, SUBMITTED, GRADED
+  gradedBy        String?
+  gradedAt        DateTime?
+  feedback        String?     @db.Text
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  examination     Examination @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, studentId])
+  @@index([tenantId])
+  @@index([studentId])
+  @@index([status])
+  @@map("exam_submissions")
+}
+
+// -----------------------------------------------------------------------------
+// 24. PHASE 5: RAPOR SEKOLAH, KHS, TRANSKRIP & KEPUTUSAN AKADEMIK
+// -----------------------------------------------------------------------------
+
+model ReportCard {
+  id                   String    @id @default(uuid())
+  tenantId             String
+  studentId            String
+  academicYearId       String
+  semesterId           String
+  classId              String
+  homeroomTeacherId    String
+  principalId          String
+  status               String    @default("DRAFT") // DRAFT, CHECKED, APPROVED, PUBLISHED
+  items                Json      // Array of ReportCardItem
+  extracurriculars     Json?     // Array of ReportCardExtracurricular
+  achievements         Json?     // Array of ReportCardAchievement
+  attendance           Json      // { hadir, sakit, izin, alpa, terlambat }
+  homeroomNotes        String?   @db.Text
+  principalNotes       String?   @db.Text
+  promotionStatus      String?   @default("ONGOING") // PROMOTED, RETAINED, GRADUATED, ONGOING
+  targetClassId        String?
+  issuedDate           DateTime
+  approvedByHomeroomAt DateTime?
+  approvedByPrincipalAt DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@unique([tenantId, studentId, academicYearId, semesterId])
+  @@index([tenantId])
+  @@index([classId])
+  @@index([status])
+  @@map("report_cards")
+}
+
+model SemesterResult {
+  id                 String   @id @default(uuid())
+  tenantId           String
+  studentId          String
+  academicYearId     String
+  semesterId         String
+  totalSks           Int      @default(0)
+  totalQualityPoints Float    @default(0.0)
+  ips                Float    @default(0.0) // Indeks Prestasi Semester
+  ipk                Float    @default(0.0) // Indeks Prestasi Kumulatif
+  cumulativeSks      Int      @default(0)
+  items              Json     // Array of KHSItem
+  status             String   @default("PUBLISHED")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([tenantId, studentId, academicYearId, semesterId])
+  @@index([tenantId])
+  @@index([studentId])
+  @@map("semester_results")
+}
+
+model UniversityTranscript {
+  id              String   @id @default(uuid())
+  tenantId        String
+  studentId       String
+  nim             String
+  studentName     String
+  programStudi    String
+  faculty         String
+  totalSksEarned  Int      @default(0)
+  ipkCumulative   Float    @default(0.0)
+  predicate       String   @default("MEMUASKAN")
+  issuedDate      DateTime
+  isOfficial      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, studentId])
+  @@index([tenantId])
+  @@map("university_transcripts")
+}
+
+model AcademicDecision {
+  id             String   @id @default(uuid())
+  tenantId       String
+  studentId      String
+  academicYearId String
+  classId        String
+  type           String   // PROMOTION, GRADUATION
+  result         String   // PROMOTED, RETAINED, GRADUATED, POSTPONED
+  targetClassId  String?
+  notes          String?  @db.Text
+  meetingDate    DateTime
+  decidedBy      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([studentId])
+  @@index([academicYearId])
+  @@map("academic_decisions")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  title     String
+  message   String   @db.Text
+  type      String   @default("INFO") // INFO, WARNING, ALERT, SUCCESS
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([read])
+  @@map("notifications")
+}

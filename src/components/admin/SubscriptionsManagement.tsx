@@ -183,7 +183,7 @@ export const SubscriptionsManagement: React.FC<SubscriptionsManagementProps> = (
                   <HardDrive className="w-3.5 h-3.5" /> Kuota Storage
                 </span>
                 <p className="text-lg font-bold text-slate-900 mt-1">
-                  {Math.round((usage?.storageUsedMb || 1420) / 1024)} GB / {Math.round(subscription.maxStorageMb / 1024)} GB
+                  {Math.round((usage?.storageUsedMb || 1420) / 1024)} GB / {Math.round((subscription.maxStorageMb || 51200) / 1024)} GB
                 </p>
               </div>
 

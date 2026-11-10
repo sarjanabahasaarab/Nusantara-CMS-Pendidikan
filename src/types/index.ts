@@ -131,6 +131,8 @@ export type PermissionCode =
   | 'institution.manage'
 
   // Akademik & Kurikulum (Phase 4)
+  | 'academic.view'
+  | 'classes.manage'
   | 'academicyears.view'
   | 'academicyears.manage'
   | 'academicterms.view'
@@ -153,7 +155,28 @@ export type PermissionCode =
   | 'learningdocs.delete'
   | 'learningdocs.approve'
   | 'academiccalendar.view'
-  | 'academiccalendar.manage';
+  | 'academiccalendar.manage'
+
+  // Absensi & Kehadiran (Phase 5)
+  | 'attendance.recap'
+  | 'staffattendance.manage'
+  | 'leaverequests.manage'
+
+  // Penilaian, Bank Soal, Ujian (Phase 5)
+  | 'assessments.manage'
+  | 'grades.lock'
+  | 'questionbank.manage'
+  | 'examinations.manage'
+  | 'examinations.take'
+
+  // Rapor, Transkrip & Keputusan Akademik (Phase 5)
+  | 'reportcards.view'
+  | 'reportcards.create'
+  | 'reportcards.approve'
+  | 'transcripts.manage'
+  | 'academicdecisions.manage'
+  | 'academicreports.view'
+  | 'notifications.view';
 
 export interface Permission {
   id: string;
@@ -239,7 +262,7 @@ export interface TeacherProfile {
   updatedAt: string;
 }
 
-export type StudentStatus = 'AKTIF' | 'PINDAH' | 'LULUS' | 'KELUAR' | 'NONAKTIF';
+export type StudentStatus = 'AKTIF' | 'PINDAH' | 'LULUS' | 'KELUAR' | 'NONAKTIF' | 'GRADUATED' | 'ALUMNI';
 
 export interface StudentProfile {
   id: string;
@@ -249,6 +272,9 @@ export interface StudentProfile {
   nisn?: string; // Nomor Induk Siswa Nasional (opsional / jika ada unik)
   nim?: string; // Nomor Induk Mahasiswa (untuk Perguruan Tinggi)
   fullName: string;
+  name?: string;
+  parentId?: string;
+  currentClassId?: string;
   birthPlace: string;
   birthDate: string;
   gender: Gender;
@@ -308,6 +334,9 @@ export interface StaffProfile {
   phone: string;
   address: string;
   isActive: boolean;
+  fullName?: string;
+  role?: string;
+  nip?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -753,6 +782,27 @@ export type ActiveNav =
   | 'admin-menus'
   | 'admin-comments'
   
+  // Admin Absensi & Kehadiran (Phase 5)
+  | 'admin-student-attendance'
+  | 'admin-staff-attendance'
+  | 'admin-leave-requests'
+
+  // Admin Penilaian, Bank Soal, Ujian (Phase 5)
+  | 'admin-assessments'
+  | 'admin-question-bank'
+  | 'admin-examinations'
+
+  // Admin Rapor, Transkrip & Keputusan Akademik (Phase 5)
+  | 'admin-report-cards'
+  | 'admin-transcripts'
+  | 'admin-academic-decisions'
+  | 'admin-academic-reports'
+  | 'admin-notifications'
+
+  // Portal Siswa & Orang Tua (Phase 5)
+  | 'portal-student'
+  | 'portal-parent'
+
   // Admin Sistem & Pengaturan
   | 'admin-seo'
   | 'admin-settings'
@@ -779,7 +829,8 @@ export type InstitutionType =
 
 export type InstitutionLevel = 'K12' | 'HIGHER_ED' | 'VOCATIONAL' | 'NON_FORMAL';
 
-export type SubscriptionPlan = 'FREE' | 'BASIC' | 'PROFESSIONAL' | 'ENTERPRISE';
+export type SubscriptionTier = 'FREE' | 'BASIC' | 'PROFESSIONAL' | 'ENTERPRISE';
+export type SubscriptionPlan = SubscriptionTier;
 
 export type TenantStatus = 'ACTIVE' | 'PENDING_VERIFICATION' | 'SUSPENDED';
 
@@ -914,7 +965,7 @@ export interface TenantUsage {
   activeModules?: string[];
 }
 
-export type AcademicYearStatus = 'ACTIVE' | 'PLANNED' | 'CLOSED';
+export type AcademicYearStatus = 'ACTIVE' | 'PLANNED' | 'CLOSED' | 'UPCOMING' | 'ARCHIVED' | 'INACTIVE';
 
 export interface AcademicYear {
   id: string;
@@ -1214,8 +1265,10 @@ export type AcademicCalendarCategory =
   | 'REPORT_DAY' 
   | 'GRADUATION' 
   | 'PPDB' 
+  | 'REGISTRATION_PPDB'
   | 'CEREMONY'
-  | 'SPECIAL';
+  | 'SPECIAL'
+  | 'OTHER';
 
 export interface AcademicCalendarEvent {
   id: string;
@@ -1235,3 +1288,564 @@ export interface AcademicCalendarEvent {
   createdAt: string;
   updatedAt?: string;
 }
+
+// -----------------------------------------------------------------------------
+// 8. PHASE 5 — SISTEM ABSENSI, PENILAIAN, UJIAN, DAN RAPOR MULTI-TENANT
+// -----------------------------------------------------------------------------
+
+// --- ABSENSI SISWA & MAHASISWA ---
+
+export type AttendanceType = 
+  | 'HADIR' 
+  | 'SAKIT' 
+  | 'IZIN' 
+  | 'ALPA' 
+  | 'TERLAMBAT' 
+  | 'DISPENSASI' 
+  | 'DINAS' 
+  | 'LIBUR';
+
+export type AttendanceStatus = AttendanceType;
+
+export type AttendanceSessionType = 
+  | 'DAILY' 
+  | 'SUBJECT' 
+  | 'LESSON_SLOT' 
+  | 'LECTURE_GROUP'
+  | 'HARIAN'
+  | 'MATA_PELAJARAN';
+
+export interface AttendanceSession {
+  id: string;
+  tenantId: string;
+  academicYearId: string;
+  semesterId: string;
+  classId: string;
+  className?: string;
+  subjectId?: string;
+  subjectName?: string;
+  teacherId: string;
+  teacherName?: string;
+  date: string; // YYYY-MM-DD
+  sessionType: AttendanceSessionType | string;
+  periodNumber?: number;
+  notes?: string;
+  title?: string;
+  topic?: string;
+  isLocked?: boolean;
+  status?: 'OPEN' | 'COMPLETED' | string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StudentAttendance {
+  id: string;
+  tenantId: string;
+  sessionId: string;
+  studentId: string;
+  studentName?: string;
+  nisOrNim?: string;
+  status: AttendanceType;
+  checkInTime?: string;
+  lateMinutes?: number;
+  minutesLate?: number;
+  date?: string;
+  notes?: string;
+  excusedReason?: string;
+  attachmentUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// --- ABSENSI PEGAWAI & GURU ---
+
+export interface StaffAttendance {
+  id: string;
+  tenantId: string;
+  staffId: string;
+  staffName?: string;
+  staffType: 'TEACHER' | 'ADMIN_STAFF' | 'STAFF' | string;
+  date: string; // YYYY-MM-DD
+  clockIn?: string;
+  clockOut?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
+  status: AttendanceType;
+  lateMinutes?: number;
+  notes?: string;
+  location?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// --- PENGAJUAN IZIN / SAKIT / DISPENSASI ---
+
+export type LeaveRequestStatus = 'MENUNGGU' | 'DISETUJUI' | 'DITOLAK' | 'DIBATALKAN';
+export type LeaveRequestType = 'SAKIT' | 'IZIN' | 'DISPENSASI' | 'CUTI' | 'DINAS';
+
+export interface LeaveRequest {
+  id: string;
+  tenantId: string;
+  requesterType?: 'STUDENT' | 'TEACHER' | 'STAFF' | 'PARENT' | string;
+  requesterId?: string;
+  requesterName?: string;
+  studentId?: string;
+  studentName?: string;
+  teacherId?: string;
+  staffId?: string;
+  classId?: string;
+  type: LeaveRequestType | string;
+  startDate: string;
+  endDate: string;
+  totalDays?: number;
+  reason: string;
+  attachmentUrl?: string;
+  documentUrl?: string;
+  status: LeaveRequestStatus;
+  reviewedBy?: string;
+  reviewedByName?: string;
+  reviewedAt?: string;
+  reviewNotes?: string;
+  approverNotes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// --- SISTEM PENILAIAN & BOBOT ---
+
+export type AssessmentType = 
+  | 'TUGAS' 
+  | 'KUIS' 
+  | 'ULANGAN_HARIAN' 
+  | 'PRAKTIK' 
+  | 'PROYEK' 
+  | 'PORTOFOLIO' 
+  | 'PTS_ASTS' 
+  | 'PAS_ASAS' 
+  | 'UJIAN_SEKOLAH' 
+  | 'UTS' 
+  | 'UAS'
+  | 'FORMATIF_TUGAS'
+  | 'FORMATIF_KUIS'
+  | 'FORMATIF_PRAKTIK'
+  | 'SUMATIF_LINGKUP_MATERI'
+  | 'SUMATIF_TENGAH_SEMESTER'
+  | 'SUMATIF_AKHIR_SEMESTER'
+  | string;
+
+export interface AssessmentComponent {
+  id: string;
+  tenantId: string;
+  academicYearId: string;
+  semesterId: string;
+  subjectId: string;
+  subjectName?: string;
+  classId?: string;
+  className?: string;
+  name: string;
+  code: string;
+  type: AssessmentType;
+  weight: number; // e.g. 20 (percent)
+  minPassingScore?: number; // KKM
+  passingGrade?: number; // Alias for KKM
+  description?: string;
+  cpTpCode?: string;
+  cpTpDescription?: string;
+  competencyDesc?: string;
+  isHigherEd?: boolean;
+  isLocked?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StudentAssessment {
+  id: string;
+  tenantId: string;
+  componentId: string;
+  studentId: string;
+  studentName?: string;
+  score: number; // 0 - 100
+  passingGrade?: number;
+  letterGrade?: string;
+  feedback?: string;
+  isLocked: boolean;
+  lockedBy?: string;
+  lockedAt?: string;
+  gradedBy?: string;
+  gradedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GradeRevision {
+  id: string;
+  tenantId: string;
+  studentAssessmentId?: string;
+  studentId: string;
+  studentName?: string;
+  componentId: string;
+  componentName?: string;
+  oldScore: number;
+  newScore: number;
+  reason: string;
+  changedBy: string;
+  changedByName: string;
+  createdAt: string;
+}
+
+// --- BANK SOAL & UJIAN ---
+
+export type QuestionType = 
+  | 'PILIHAN_GANDA' 
+  | 'PILIHAN_GANDA_KOMPLEKS' 
+  | 'BENAR_SALAH' 
+  | 'ISIAN_SINGKAT' 
+  | 'ESAI' 
+  | 'MENJODOHKAN'
+  | string;
+
+export type DifficultyLevel = 'MUDAH' | 'SEDANG' | 'SULIT';
+
+export type CognitiveLevel = 
+  | 'C1_MENGINGAT' 
+  | 'C2_MEMAHAMI' 
+  | 'C3_MENERAPKAN' 
+  | 'C4_MENGANALISIS' 
+  | 'C5_MENGEVALUASI' 
+  | 'C6_MENCIPTA'
+  | 'C1' | 'C2' | 'C3' | 'C4' | 'C5' | 'C6'
+  | string;
+
+export interface QuestionOption {
+  id: string;
+  key?: string; // 'A', 'B', 'C', 'D', 'E'
+  text: string;
+  isCorrect?: boolean;
+  matchPair?: string;
+}
+
+export interface Question {
+  id: string;
+  tenantId: string;
+  bankId?: string;
+  subjectId?: string;
+  subjectName?: string;
+  gradeLevel?: string;
+  questionType?: QuestionType;
+  type?: QuestionType;
+  content?: string;
+  prompt?: string;
+  imageUrl?: string;
+  options?: any;
+  correctAnswers?: string[];
+  correctAnswer?: any;
+  matchPairs?: { left: string; right: string }[];
+  explanation?: string;
+  difficulty: DifficultyLevel;
+  cognitiveLevel?: CognitiveLevel;
+  scoreWeight?: number;
+  points?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface QuestionBank {
+  id: string;
+  tenantId: string;
+  subjectId: string;
+  subjectName?: string;
+  name?: string;
+  title?: string;
+  code?: string;
+  description?: string;
+  gradeLevel: string;
+  createdBy?: string;
+  createdByName?: string;
+  totalQuestions: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type ExamStatus = 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'ARCHIVED';
+export type ExamMode = 'ONLINE' | 'OFFLINE' | 'HYBRID' | 'ONLINE_CBT' | 'OFFLINE_PAPER' | 'PRAKTIK';
+export type ExamType = ExamMode;
+
+export interface Examination {
+  id: string;
+  tenantId: string;
+  academicYearId: string;
+  semesterId: string;
+  subjectId: string;
+  subjectName?: string;
+  bankId?: string;
+  classIds?: string[];
+  targetClassIds?: string[];
+  classNames?: string[];
+  title: string;
+  code: string;
+  description?: string;
+  mode?: ExamMode;
+  type?: ExamType;
+  status: ExamStatus;
+  startTime: string; // ISO String
+  endTime: string;   // ISO String
+  durationMinutes: number;
+  passingGrade: number;
+  shuffleQuestions?: boolean;
+  isRandomized?: boolean;
+  shuffleOptions?: boolean;
+  showResultImmediately?: boolean;
+  maxAttempts?: number;
+  questionIds?: string[];
+  supervisorTeacherId?: string;
+  supervisorTeacherName?: string;
+  isHigherEd?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type ExamSubmissionStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'GRADED';
+
+export interface ExamAnswer {
+  questionId: string;
+  answer?: any;
+  selectedOptionIds?: string[];
+  textAnswer?: string;
+  isCorrect?: boolean;
+  scoreEarned?: number;
+  gradedFeedback?: string;
+}
+
+export interface ExamSubmission {
+  id: string;
+  tenantId: string;
+  examId: string;
+  examTitle?: string;
+  studentId: string;
+  studentName?: string;
+  startedAt?: string;
+  submittedAt?: string;
+  durationSeconds?: number;
+  answers: any;
+  objectiveScore?: number;
+  essayScore?: number;
+  totalScore?: number;
+  isPassed?: boolean;
+  status?: ExamSubmissionStatus;
+  gradedBy?: string;
+  gradedAt?: string;
+  feedback?: string;
+  updatedAt?: string;
+}
+
+// --- RAPOR SEKOLAH (K-12: SD, SMP, SMA, SMK) ---
+
+export type ReportCardStatus = 'DRAFT' | 'CHECKED' | 'APPROVED' | 'PUBLISHED';
+
+export interface ReportCardItem {
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  kkm?: number;
+  passingGrade?: number;
+  finalScore: number;
+  letterGrade: string;
+  predicate?: string;
+  competencyAchievement?: string;
+  competencyDescription?: string;
+  components?: any[];
+}
+
+export interface ReportCardExtracurricular {
+  name: string;
+  predicate?: string;
+  score?: string;
+  notes?: string;
+  description?: string;
+}
+
+export interface ReportCardAchievement {
+  type: string;
+  title: string;
+  level: string;
+  year: string;
+}
+
+export interface ReportCardAttendance {
+  hadir: number;
+  sakit: number;
+  izin: number;
+  alpa: number;
+  terlambat?: number;
+  dispensasi?: number;
+}
+
+export interface ReportCard {
+  id: string;
+  tenantId: string;
+  studentId: string;
+  studentName?: string;
+  nisn?: string;
+  nis?: string;
+  academicYearId: string;
+  academicYearName?: string;
+  semesterId: string;
+  semesterName?: string;
+  classId: string;
+  className?: string;
+  homeroomTeacherId?: string;
+  homeroomTeacherName?: string;
+  principalId?: string;
+  principalName?: string;
+  status: ReportCardStatus;
+  items?: ReportCardItem[];
+  grades?: any[];
+  extracurriculars?: any[];
+  achievements?: ReportCardAchievement[];
+  attendance?: ReportCardAttendance;
+  attendanceSummary?: any;
+  homeroomNotes?: string;
+  homeroomTeacherNotes?: string;
+  principalNotes?: string;
+  headmasterNotes?: string;
+  promotionStatus?: 'PROMOTED' | 'RETAINED' | 'GRADUATED' | 'ONGOING' | string;
+  targetClassId?: string;
+  targetClassName?: string;
+  issuedDate?: string;
+  approvedByHomeroomAt?: string;
+  approvedByPrincipalAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// --- PERGURUAN TINGGI: KHS & TRANSKRIP AKADEMIK ---
+
+export type GradeLetter = 'A' | 'A-' | 'B+' | 'B' | 'B-' | 'C+' | 'C' | 'D' | 'E';
+
+export interface KHSItem {
+  courseId?: string;
+  courseCode?: string;
+  code?: string;
+  courseName?: string;
+  name?: string;
+  sks?: number;
+  credits?: number;
+  numericScore?: number;
+  letterGrade?: GradeLetter | string;
+  gradeLetter?: string;
+  qualityPoint?: number;
+  gradePoint?: number;
+  weightedQualityPoint?: number;
+  status?: 'LULUS' | 'MENGULANG' | string;
+  isPassed?: boolean;
+}
+
+export interface SemesterResult {
+  id: string;
+  tenantId: string;
+  studentId: string;
+  studentName?: string;
+  nim?: string;
+  academicYearId: string;
+  semesterId: string;
+  semesterName?: string;
+  semesterNumber?: number;
+  totalSks?: number;
+  creditsAttempted?: number;
+  creditsEarned?: number;
+  totalQualityPoints?: number;
+  ips?: number;              // Indeks Prestasi Semester
+  ipk?: number;              // Indeks Prestasi Kumulatif
+  gpaSemester?: number;
+  gpaCumulative?: number;
+  cumulativeSks?: number;
+  items?: KHSItem[];
+  courses?: any[];
+  academicStatus?: string;
+  isPublished?: boolean;
+  status?: 'DRAFT' | 'VERIFIED' | 'PUBLISHED' | string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UniversityTranscript {
+  id: string;
+  tenantId: string;
+  studentId: string;
+  nim?: string;
+  studentName?: string;
+  programStudi?: string;
+  faculty?: string;
+  transcriptNumber?: string;
+  totalSksEarned?: number;
+  totalCredits?: number;
+  ipkCumulative?: number;
+  gpaCumulative?: number;
+  honorsPredicate?: string;
+  thesisTitle?: string;
+  predicate?: 'DENGAN_PUJIAN' | 'SANGAT_MEMUASKAN' | 'MEMUASKAN' | 'LULUS' | string;
+  issuedDate?: string;
+  issueDate?: string;
+  isOfficial: boolean;
+  courses?: any[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// --- KEPUTUSAN AKADEMIK (KENAIKAN KELAS & KELULUSAN) ---
+
+export type AcademicDecisionType = 
+  | 'PROMOTION' 
+  | 'GRADUATION'
+  | 'KENAIKAN_KELAS'
+  | 'KELULUSAN';
+
+export type DecisionResult = 
+  | 'PROMOTED' 
+  | 'RETAINED' 
+  | 'GRADUATED' 
+  | 'POSTPONED'
+  | 'NAIK_KELAS'
+  | 'TINGGAL_KELAS'
+  | 'LULUS'
+  | 'TIDAK_LULUS'
+  | 'DITUNDA';
+
+export interface AcademicDecision {
+  id: string;
+  tenantId: string;
+  studentId: string;
+  studentName?: string;
+  nisOrNim?: string;
+  academicYearId: string;
+  classId?: string;
+  className?: string;
+  type?: AcademicDecisionType;
+  decisionType?: any;
+  result: DecisionResult;
+  targetClassId?: string;
+  targetClassName?: string;
+  notes?: string;
+  meetingDate: string;
+  skNumber?: string;
+  decidedBy?: string;
+  decidedByName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// --- NOTIFIKASI AKADEMIK ---
+
+export interface Notification {
+  id: string;
+  tenantId: string;
+  userId?: string;
+  title: string;
+  message: string;
+  type: 'INFO' | 'WARNING' | 'ALERT' | 'SUCCESS' | 'ERROR';
+  read?: boolean;
+  isRead?: boolean;
+  link?: string;
+  createdAt: string;
+}
+

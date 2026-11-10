@@ -56,6 +56,30 @@ import {
   ScheduleItem,
   LearningDocument,
   AcademicCalendarEvent,
+  AttendanceSession,
+  StudentAttendance,
+  StaffAttendance,
+  LeaveRequest,
+  LeaveRequestStatus,
+  AssessmentComponent,
+  StudentAssessment,
+  GradeRevision,
+  QuestionBank,
+  Question,
+  Examination,
+  ExamStatus,
+  ExamSubmission,
+  ReportCard,
+  ReportCardStatus,
+  ReportCardItem,
+  KHSItem,
+  SemesterResult,
+  UniversityTranscript,
+  AcademicDecision,
+  Notification,
+  AttendanceType,
+  ExamAnswer,
+  GradeLetter,
 } from '../../types';
 import {
   INITIAL_AUDIT_LOGS,
@@ -102,10 +126,26 @@ import {
   INITIAL_SCHEDULE_ITEMS,
   INITIAL_LEARNING_DOCUMENTS,
   INITIAL_ACADEMIC_CALENDAR_EVENTS,
+  INITIAL_ATTENDANCE_SESSIONS,
+  INITIAL_STUDENT_ATTENDANCES,
+  INITIAL_STAFF_ATTENDANCES,
+  INITIAL_LEAVE_REQUESTS,
+  INITIAL_ASSESSMENT_COMPONENTS,
+  INITIAL_STUDENT_ASSESSMENTS,
+  INITIAL_GRADE_REVISIONS,
+  INITIAL_QUESTION_BANKS,
+  INITIAL_QUESTIONS,
+  INITIAL_EXAMINATIONS,
+  INITIAL_EXAM_SUBMISSIONS,
+  INITIAL_REPORT_CARDS,
+  INITIAL_SEMESTER_RESULTS,
+  INITIAL_UNIVERSITY_TRANSCRIPTS,
+  INITIAL_ACADEMIC_DECISIONS,
+  INITIAL_NOTIFICATIONS,
 } from './initialData';
 import { generateId, slugify } from '../utils';
 
-const STORAGE_KEY = 'nusantara_cms_db_v4';
+const STORAGE_KEY = 'nusantara_cms_db_v5';
 
 interface CmsDataState {
   settings: SiteSetting;
@@ -156,6 +196,23 @@ interface CmsDataState {
   scheduleItems: ScheduleItem[];
   learningDocuments: LearningDocument[];
   academicCalendarEvents: AcademicCalendarEvent[];
+  // Phase 5 Absensi, Penilaian, Ujian, Rapor
+  attendanceSessions: AttendanceSession[];
+  studentAttendances: StudentAttendance[];
+  staffAttendances: StaffAttendance[];
+  leaveRequests: LeaveRequest[];
+  assessmentComponents: AssessmentComponent[];
+  studentAssessments: StudentAssessment[];
+  gradeRevisions: GradeRevision[];
+  questionBanks: QuestionBank[];
+  questions: Question[];
+  examinations: Examination[];
+  examSubmissions: ExamSubmission[];
+  reportCards: ReportCard[];
+  semesterResults: SemesterResult[];
+  universityTranscripts: UniversityTranscript[];
+  academicDecisions: AcademicDecision[];
+  notifications: Notification[];
 }
 
 class CmsStore {
@@ -216,6 +273,23 @@ class CmsStore {
       scheduleItems: [...INITIAL_SCHEDULE_ITEMS],
       learningDocuments: [...INITIAL_LEARNING_DOCUMENTS],
       academicCalendarEvents: [...INITIAL_ACADEMIC_CALENDAR_EVENTS],
+      // Phase 5 defaults
+      attendanceSessions: [...INITIAL_ATTENDANCE_SESSIONS],
+      studentAttendances: [...INITIAL_STUDENT_ATTENDANCES],
+      staffAttendances: [...INITIAL_STAFF_ATTENDANCES],
+      leaveRequests: [...INITIAL_LEAVE_REQUESTS],
+      assessmentComponents: [...INITIAL_ASSESSMENT_COMPONENTS],
+      studentAssessments: [...INITIAL_STUDENT_ASSESSMENTS],
+      gradeRevisions: [...INITIAL_GRADE_REVISIONS],
+      questionBanks: [...INITIAL_QUESTION_BANKS],
+      questions: [...INITIAL_QUESTIONS],
+      examinations: [...INITIAL_EXAMINATIONS],
+      examSubmissions: [...INITIAL_EXAM_SUBMISSIONS],
+      reportCards: [...INITIAL_REPORT_CARDS],
+      semesterResults: [...INITIAL_SEMESTER_RESULTS],
+      universityTranscripts: [...INITIAL_UNIVERSITY_TRANSCRIPTS],
+      academicDecisions: [...INITIAL_ACADEMIC_DECISIONS],
+      notifications: [...INITIAL_NOTIFICATIONS],
     };
 
     if (typeof window === 'undefined') {
@@ -274,6 +348,23 @@ class CmsStore {
           scheduleItems: parsed.scheduleItems || defaultState.scheduleItems,
           learningDocuments: parsed.learningDocuments || defaultState.learningDocuments,
           academicCalendarEvents: parsed.academicCalendarEvents || defaultState.academicCalendarEvents,
+          // Phase 5 saved state
+          attendanceSessions: parsed.attendanceSessions || defaultState.attendanceSessions,
+          studentAttendances: parsed.studentAttendances || defaultState.studentAttendances,
+          staffAttendances: parsed.staffAttendances || defaultState.staffAttendances,
+          leaveRequests: parsed.leaveRequests || defaultState.leaveRequests,
+          assessmentComponents: parsed.assessmentComponents || defaultState.assessmentComponents,
+          studentAssessments: parsed.studentAssessments || defaultState.studentAssessments,
+          gradeRevisions: parsed.gradeRevisions || defaultState.gradeRevisions,
+          questionBanks: parsed.questionBanks || defaultState.questionBanks,
+          questions: parsed.questions || defaultState.questions,
+          examinations: parsed.examinations || defaultState.examinations,
+          examSubmissions: parsed.examSubmissions || defaultState.examSubmissions,
+          reportCards: parsed.reportCards || defaultState.reportCards,
+          semesterResults: parsed.semesterResults || defaultState.semesterResults,
+          universityTranscripts: parsed.universityTranscripts || defaultState.universityTranscripts,
+          academicDecisions: parsed.academicDecisions || defaultState.academicDecisions,
+          notifications: parsed.notifications || defaultState.notifications,
         };
       }
     } catch (e) {
@@ -2232,6 +2323,13 @@ class CmsStore {
   // ===========================================================================
   // TEACHER PROFILES (PHASE 3)
   // ===========================================================================
+  public getTeachers(tenantId?: string): TeacherProfile[] {
+    if (tenantId) {
+      return this.state.teacherProfiles.filter((t) => t.tenantId === tenantId);
+    }
+    return [...this.state.teacherProfiles];
+  }
+
   public getTeacherProfiles(): TeacherProfile[] {
     return [...this.state.teacherProfiles];
   }
@@ -2344,6 +2442,13 @@ class CmsStore {
   // ===========================================================================
   // STUDENT PROFILES (PHASE 3)
   // ===========================================================================
+  public getStudents(tenantId?: string): StudentProfile[] {
+    if (tenantId) {
+      return this.state.studentProfiles.filter((s) => !s.tenantId || s.tenantId === tenantId);
+    }
+    return [...this.state.studentProfiles];
+  }
+
   public getStudentProfiles(): StudentProfile[] {
     return [...this.state.studentProfiles];
   }
@@ -2606,6 +2711,10 @@ class CmsStore {
   // ===========================================================================
   public getStaffProfiles(): StaffProfile[] {
     return [...this.state.staffProfiles];
+  }
+
+  public getStaff(tenantId?: string): StaffProfile[] {
+    return this.getStaffProfiles();
   }
 
   public getStaffProfileById(id: string): StaffProfile | undefined {
@@ -3410,6 +3519,10 @@ class CmsStore {
 
   public getTenants(): Tenant[] {
     return [...this.state.tenants];
+  }
+
+  public getCurrentTenant(): Tenant | undefined {
+    return this.state.tenants[0];
   }
 
   public getTenantById(id: string): Tenant | null {
@@ -4241,6 +4354,10 @@ class CmsStore {
     });
   }
 
+  public getClasses(tenantId?: string, academicYearId?: string): AcademicClass[] {
+    return this.getAcademicClasses(tenantId, academicYearId);
+  }
+
   public getAcademicClassById(id: string): AcademicClass | null {
     return this.state.academicClasses.find((c) => c.id === id) || null;
   }
@@ -4914,6 +5031,2173 @@ class CmsStore {
     return true;
   }
 
+  // ===========================================================================
+  // PHASE 5: SISTEM PRESENSI & KEHADIRAN (SISWA & MAHASISWA)
+  // ===========================================================================
+
+  public getAttendanceSessions(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      classId?: string;
+      date?: string;
+      sessionType?: string;
+      subjectId?: string;
+      academicYearId?: string;
+      semesterId?: string;
+    },
+    filterParams?: {
+      classId?: string;
+      date?: string;
+      sessionType?: string;
+      subjectId?: string;
+      academicYearId?: string;
+      semesterId?: string;
+    }
+  ): AttendanceSession[] {
+    let list = [...this.state.attendanceSessions];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((s) => s.tenantId === tenantIdOrParams);
+      if (filterParams?.classId) list = list.filter((s) => s.classId === filterParams.classId);
+      if (filterParams?.date) list = list.filter((s) => s.date === filterParams.date);
+      if (filterParams?.sessionType) list = list.filter((s) => s.sessionType === filterParams.sessionType);
+      if (filterParams?.subjectId) list = list.filter((s) => s.subjectId === filterParams.subjectId);
+      if (filterParams?.academicYearId) list = list.filter((s) => s.academicYearId === filterParams.academicYearId);
+      if (filterParams?.semesterId) list = list.filter((s) => s.semesterId === filterParams.semesterId);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((s) => s.tenantId === params.tenantId);
+    if (params?.classId) list = list.filter((s) => s.classId === params.classId);
+    if (params?.date) list = list.filter((s) => s.date === params.date);
+    if (params?.sessionType) list = list.filter((s) => s.sessionType === params.sessionType);
+    if (params?.subjectId) list = list.filter((s) => s.subjectId === params.subjectId);
+    if (params?.academicYearId) list = list.filter((s) => s.academicYearId === params.academicYearId);
+    if (params?.semesterId) list = list.filter((s) => s.semesterId === params.semesterId);
+    return list;
+  }
+
+  public getAttendanceSessionById(id: string): AttendanceSession | undefined {
+    return this.state.attendanceSessions.find((s) => s.id === id);
+  }
+
+  public createAttendanceSession(
+    data: Omit<AttendanceSession, 'id' | 'createdAt' | 'updatedAt'>,
+    records?: {
+      studentId: string;
+      status: AttendanceType;
+      notes?: string;
+      lateMinutes?: number;
+      excusedReason?: string;
+      attachmentUrl?: string;
+    }[],
+    user?: User | null
+  ): AttendanceSession {
+    // 1. Anti-duplicate session validation
+    const existing = this.state.attendanceSessions.find(
+      (s) =>
+        s.tenantId === data.tenantId &&
+        s.classId === data.classId &&
+        s.date === data.date &&
+        s.sessionType === data.sessionType &&
+        (s.subjectId || null) === (data.subjectId || null) &&
+        (s.periodNumber || null) === (data.periodNumber || null)
+    );
+    if (existing) {
+      throw new Error('Sesi presensi untuk kelas, tanggal, dan mata pelajaran ini sudah dibuat sebelumnya.');
+    }
+
+    // 2. Teacher assignment constraint check
+    if (user && user.role === 'GURU' && data.subjectId) {
+      const teacherProfile = this.getTeacherProfileByUserId(user.id);
+      if (teacherProfile) {
+        const assignments = this.getTeachingAssignments(data.tenantId).filter(
+          (a) => a.teacherId === teacherProfile.id && a.classId === data.classId && a.subjectId === data.subjectId
+        );
+        if (assignments.length === 0) {
+          throw new Error('Guru hanya diizinkan mencatat presensi untuk mata pelajaran dan rombel yang ditugaskan.');
+        }
+      }
+    }
+
+    const now = new Date().toISOString();
+    const sessionId = generateId('sess');
+    const newSession: AttendanceSession = {
+      ...data,
+      id: sessionId,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.state.attendanceSessions.unshift(newSession);
+
+    // 3. Populate student records
+    if (records && records.length > 0) {
+      records.forEach((rec) => {
+        const student = this.getStudentProfileById(rec.studentId);
+        const recordId = generateId('sa');
+        this.state.studentAttendances.push({
+          id: recordId,
+          tenantId: data.tenantId,
+          sessionId,
+          studentId: rec.studentId,
+          studentName: student?.fullName || student?.name,
+          nisOrNim: student?.nisn || student?.nis,
+          status: rec.status,
+          checkInTime: rec.status === 'HADIR' || rec.status === 'TERLAMBAT' ? now : undefined,
+          lateMinutes: rec.lateMinutes || (rec.status === 'TERLAMBAT' ? 15 : 0),
+          notes: rec.notes,
+          excusedReason: rec.excusedReason,
+          attachmentUrl: rec.attachmentUrl,
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
+    }
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'ATTENDANCE_SESSION_CREATE',
+      entity: 'ATTENDANCE',
+      entityId: sessionId,
+      details: `Membuat sesi presensi ${data.sessionType} kelas ${data.className || data.classId} tanggal ${data.date}`,
+    });
+
+    this.saveState();
+    return newSession;
+  }
+
+  public updateAttendanceSession(
+    id: string,
+    data: Partial<AttendanceSession>,
+    user?: User | null
+  ): AttendanceSession | null {
+    const idx = this.state.attendanceSessions.findIndex((s) => s.id === id);
+    if (idx === -1) return null;
+
+    this.state.attendanceSessions[idx] = {
+      ...this.state.attendanceSessions[idx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'ATTENDANCE_SESSION_UPDATE',
+      entity: 'ATTENDANCE',
+      entityId: id,
+      details: `Memperbarui sesi presensi ID ${id}`,
+    });
+
+    this.saveState();
+    return this.state.attendanceSessions[idx];
+  }
+
+  public deleteAttendanceSession(id: string, user?: User | null): boolean {
+    const idx = this.state.attendanceSessions.findIndex((s) => s.id === id);
+    if (idx === -1) return false;
+
+    // Hapus relasi presensi siswa
+    this.state.studentAttendances = this.state.studentAttendances.filter((r) => r.sessionId !== id);
+    this.state.attendanceSessions.splice(idx, 1);
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'ATTENDANCE_SESSION_DELETE',
+      entity: 'ATTENDANCE',
+      entityId: id,
+      details: `Menghapus sesi presensi ID ${id} beserta seluruh lembar rekap siswa`,
+    });
+
+    this.saveState();
+    return true;
+  }
+
+  public getStudentAttendances(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      sessionId?: string;
+      studentId?: string;
+    },
+    filterParams?: {
+      sessionId?: string;
+      studentId?: string;
+    }
+  ): StudentAttendance[] {
+    let list = [...this.state.studentAttendances];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((r) => r.tenantId === tenantIdOrParams);
+      if (filterParams?.sessionId) list = list.filter((r) => r.sessionId === filterParams.sessionId);
+      if (filterParams?.studentId) list = list.filter((r) => r.studentId === filterParams.studentId);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((r) => r.tenantId === params.tenantId);
+    if (params?.sessionId) list = list.filter((r) => r.sessionId === params.sessionId);
+    if (params?.studentId) list = list.filter((r) => r.studentId === params.studentId);
+    return list;
+  }
+
+  public recordStudentAttendanceBatch(
+    tenantId: string,
+    sessionId: string,
+    records: any[],
+    user?: User | null
+  ): StudentAttendance[] {
+    return this.recordStudentAttendance(sessionId, records, user);
+  }
+
+  public recordStudentAttendance(
+    sessionId: string,
+    records: {
+      studentId: string;
+      status: AttendanceType;
+      notes?: string;
+      lateMinutes?: number;
+      excusedReason?: string;
+      attachmentUrl?: string;
+    }[],
+    user?: User | null
+  ): StudentAttendance[] {
+    const session = this.getAttendanceSessionById(sessionId);
+    if (!session) throw new Error('Sesi presensi tidak ditemukan');
+
+    const now = new Date().toISOString();
+    const updatedRecords: StudentAttendance[] = [];
+
+    records.forEach((rec) => {
+      const existingIdx = this.state.studentAttendances.findIndex(
+        (r) => r.sessionId === sessionId && r.studentId === rec.studentId
+      );
+
+      const student = this.getStudentProfileById(rec.studentId);
+
+      if (existingIdx !== -1) {
+        this.state.studentAttendances[existingIdx] = {
+          ...this.state.studentAttendances[existingIdx],
+          status: rec.status,
+          notes: rec.notes ?? this.state.studentAttendances[existingIdx].notes,
+          lateMinutes: rec.lateMinutes ?? this.state.studentAttendances[existingIdx].lateMinutes,
+          excusedReason: rec.excusedReason ?? this.state.studentAttendances[existingIdx].excusedReason,
+          attachmentUrl: rec.attachmentUrl ?? this.state.studentAttendances[existingIdx].attachmentUrl,
+          updatedAt: now,
+        };
+        updatedRecords.push(this.state.studentAttendances[existingIdx]);
+      } else {
+        const newRecord: StudentAttendance = {
+          id: generateId('sa'),
+          tenantId: session.tenantId,
+          sessionId,
+          studentId: rec.studentId,
+          studentName: student?.fullName || student?.name,
+          nisOrNim: student?.nisn || student?.nis,
+          status: rec.status,
+          checkInTime: rec.status === 'HADIR' || rec.status === 'TERLAMBAT' ? now : undefined,
+          lateMinutes: rec.lateMinutes || (rec.status === 'TERLAMBAT' ? 15 : 0),
+          notes: rec.notes,
+          excusedReason: rec.excusedReason,
+          attachmentUrl: rec.attachmentUrl,
+          createdAt: now,
+          updatedAt: now,
+        };
+        this.state.studentAttendances.push(newRecord);
+        updatedRecords.push(newRecord);
+      }
+    });
+
+    this.saveState();
+    return updatedRecords;
+  }
+
+  public updateStudentAttendanceRecord(
+    id: string,
+    data: Partial<StudentAttendance>,
+    user?: User | null
+  ): StudentAttendance | null {
+    const idx = this.state.studentAttendances.findIndex((r) => r.id === id);
+    if (idx === -1) return null;
+
+    this.state.studentAttendances[idx] = {
+      ...this.state.studentAttendances[idx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveState();
+    return this.state.studentAttendances[idx];
+  }
+
+  public getStudentAttendanceRecap(params: {
+    tenantId: string;
+    classId?: string;
+    studentId?: string;
+    academicYearId?: string;
+    semesterId?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    // 1. Temukan sesi yang sesuai
+    let sessions = this.getAttendanceSessions({
+      tenantId: params.tenantId,
+      classId: params.classId,
+      academicYearId: params.academicYearId,
+      semesterId: params.semesterId,
+    });
+
+    if (params.startDate) sessions = sessions.filter((s) => s.date >= params.startDate!);
+    if (params.endDate) sessions = sessions.filter((s) => s.date <= params.endDate!);
+
+    const sessionIds = new Set(sessions.map((s) => s.id));
+    let records = this.state.studentAttendances.filter((r) => sessionIds.has(r.sessionId));
+
+    if (params.studentId) {
+      records = records.filter((r) => r.studentId === params.studentId);
+    }
+
+    const counts = {
+      hadir: records.filter((r) => r.status === 'HADIR').length,
+      sakit: records.filter((r) => r.status === 'SAKIT').length,
+      izin: records.filter((r) => r.status === 'IZIN').length,
+      alpa: records.filter((r) => r.status === 'ALPA').length,
+      terlambat: records.filter((r) => r.status === 'TERLAMBAT').length,
+      dispensasi: records.filter((r) => r.status === 'DISPENSASI').length,
+      dinas: records.filter((r) => r.status === 'DINAS').length,
+      libur: records.filter((r) => r.status === 'LIBUR').length,
+      totalSessions: records.length,
+      attendancePercentage: records.length > 0
+        ? Math.round(
+            ((records.filter((r) => r.status === 'HADIR' || r.status === 'TERLAMBAT' || r.status === 'DISPENSASI').length) /
+              records.length) *
+              100
+          )
+        : 100,
+    };
+
+    return counts;
+  }
+
+  // ===========================================================================
+  // PHASE 5: PRESENSI PEGAWAI & GURU
+  // ===========================================================================
+
+  public getStaffAttendances(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      staffId?: string;
+      date?: string;
+      month?: string; // YYYY-MM
+    },
+    filterParams?: {
+      staffId?: string;
+      date?: string;
+      month?: string;
+    }
+  ): StaffAttendance[] {
+    let list = [...this.state.staffAttendances];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((r) => r.tenantId === tenantIdOrParams);
+      if (filterParams?.staffId) list = list.filter((r) => r.staffId === filterParams.staffId);
+      if (filterParams?.date) list = list.filter((r) => r.date === filterParams.date);
+      if (filterParams?.month) list = list.filter((r) => r.date.startsWith(filterParams.month!));
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((r) => r.tenantId === params.tenantId);
+    if (params?.staffId) list = list.filter((r) => r.staffId === params.staffId);
+    if (params?.date) list = list.filter((r) => r.date === params.date);
+    if (params?.month) list = list.filter((r) => r.date.startsWith(params.month!));
+    return list;
+  }
+
+  public recordStaffAttendance(
+    data: Omit<StaffAttendance, 'id' | 'createdAt' | 'updatedAt'>,
+    user?: User | null
+  ): StaffAttendance {
+    return this.recordStaffAttendanceManual(data, user);
+  }
+
+  public clockInStaff(
+    data: {
+      tenantId: string;
+      staffId: string;
+      staffType: 'TEACHER' | 'ADMIN_STAFF' | 'STAFF';
+      status?: AttendanceType;
+      location?: string;
+      notes?: string;
+    },
+    user?: User | null
+  ): StaffAttendance {
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toISOString();
+
+    const existingIdx = this.state.staffAttendances.findIndex(
+      (r) => r.tenantId === data.tenantId && r.staffId === data.staffId && r.date === today
+    );
+
+    if (existingIdx !== -1) {
+      return this.state.staffAttendances[existingIdx];
+    }
+
+    const teacher = this.getTeacherProfileById(data.staffId);
+    const staff = this.getStaffProfiles().find((s) => s.id === data.staffId);
+    const staffName = teacher?.fullName || staff?.fullName || user?.name;
+
+    const newRecord: StaffAttendance = {
+      id: generateId('stfa'),
+      tenantId: data.tenantId,
+      staffId: data.staffId,
+      staffName,
+      staffType: data.staffType,
+      date: today,
+      checkInTime: now,
+      status: data.status || 'HADIR',
+      location: data.location || 'Presensi Online Nusantara CMS',
+      notes: data.notes,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.state.staffAttendances.unshift(newRecord);
+    this.saveState();
+    return newRecord;
+  }
+
+  public clockOutStaff(id: string, checkOutTime?: string, user?: User | null): StaffAttendance | null {
+    const idx = this.state.staffAttendances.findIndex((r) => r.id === id);
+    if (idx === -1) return null;
+
+    const now = checkOutTime || new Date().toISOString();
+    this.state.staffAttendances[idx] = {
+      ...this.state.staffAttendances[idx],
+      checkOutTime: now,
+      updatedAt: now,
+    };
+
+    this.saveState();
+    return this.state.staffAttendances[idx];
+  }
+
+  public recordStaffAttendanceManual(
+    data: Omit<StaffAttendance, 'id' | 'createdAt' | 'updatedAt'>,
+    user?: User | null
+  ): StaffAttendance {
+    const now = new Date().toISOString();
+    const newRecord: StaffAttendance = {
+      ...data,
+      id: generateId('stfa'),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.state.staffAttendances.unshift(newRecord);
+    this.saveState();
+    return newRecord;
+  }
+
+  // ===========================================================================
+  // PHASE 5: PENGAJUAN IZIN / SAKIT / DISPENSASI (LEAVE REQUESTS)
+  // ===========================================================================
+
+  public getLeaveRequests(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      studentId?: string;
+      requesterId?: string;
+      status?: LeaveRequestStatus;
+    },
+    filterParams?: {
+      studentId?: string;
+      requesterId?: string;
+      status?: LeaveRequestStatus;
+    }
+  ): LeaveRequest[] {
+    let list = [...this.state.leaveRequests];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((r) => r.tenantId === tenantIdOrParams);
+      if (filterParams?.studentId) list = list.filter((r) => r.studentId === filterParams.studentId);
+      if (filterParams?.requesterId) list = list.filter((r) => r.requesterId === filterParams.requesterId);
+      if (filterParams?.status) list = list.filter((r) => r.status === filterParams.status);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((r) => r.tenantId === params.tenantId);
+    if (params?.studentId) list = list.filter((r) => r.studentId === params.studentId);
+    if (params?.requesterId) list = list.filter((r) => r.requesterId === params.requesterId);
+    if (params?.status) list = list.filter((r) => r.status === params.status);
+    return list;
+  }
+
+  public getLeaveRequestById(id: string): LeaveRequest | undefined {
+    return this.state.leaveRequests.find((r) => r.id === id);
+  }
+
+  public createLeaveRequest(
+    data: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>,
+    user?: User | null
+  ): LeaveRequest {
+    const now = new Date().toISOString();
+    const newReq: LeaveRequest = {
+      ...data,
+      id: generateId('lr'),
+      status: 'MENUNGGU',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.state.leaveRequests.unshift(newReq);
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'LEAVE_REQUEST_SUBMIT',
+      entity: 'LEAVE_REQUEST',
+      entityId: newReq.id,
+      details: `Pengajuan izin ${data.type} tanggal ${data.startDate} s/d ${data.endDate} untuk ${data.studentName || data.requesterName}`,
+    });
+
+    this.saveState();
+    return newReq;
+  }
+
+  public reviewLeaveRequest(
+    id: string,
+    status: 'DISETUJUI' | 'DITOLAK',
+    reviewNotes?: string,
+    user?: User | null
+  ): LeaveRequest | null {
+    const idx = this.state.leaveRequests.findIndex((r) => r.id === id);
+    if (idx === -1) return null;
+
+    const now = new Date().toISOString();
+    this.state.leaveRequests[idx] = {
+      ...this.state.leaveRequests[idx],
+      status,
+      reviewedBy: user?.id,
+      reviewedByName: user?.name,
+      reviewedAt: now,
+      reviewNotes,
+      updatedAt: now,
+    };
+
+    // Notifikasi internal otomatis kepada pemohon
+    this.createNotification({
+      tenantId: this.state.leaveRequests[idx].tenantId,
+      userId: this.state.leaveRequests[idx].requesterId,
+      title: `Pengajuan ${this.state.leaveRequests[idx].type} ${status}`,
+      message: `Permohonan izin Anda telah diverifikasi oleh ${user?.name || 'Sekolah'} dengan status: ${status}.`,
+      type: status === 'DISETUJUI' ? 'SUCCESS' : 'ALERT',
+    });
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: status === 'DISETUJUI' ? 'LEAVE_REQUEST_APPROVE' : 'LEAVE_REQUEST_REJECT',
+      entity: 'LEAVE_REQUEST',
+      entityId: id,
+      details: `Memproses surat izin ID ${id} menjadi ${status}`,
+    });
+
+    this.saveState();
+    return this.state.leaveRequests[idx];
+  }
+
+  public cancelLeaveRequest(id: string, user?: User | null): boolean {
+    const idx = this.state.leaveRequests.findIndex((r) => r.id === id);
+    if (idx === -1) return false;
+
+    this.state.leaveRequests[idx].status = 'DIBATALKAN';
+    this.state.leaveRequests[idx].updatedAt = new Date().toISOString();
+    this.saveState();
+    return true;
+  }
+
+  public updateLeaveRequestStatus(
+    id: string,
+    status: LeaveRequestStatus,
+    reviewNotes?: string,
+    user?: User | null
+  ): LeaveRequest | null {
+    return this.reviewLeaveRequest(id, status as any, reviewNotes, user);
+  }
+
+  // ===========================================================================
+  // PHASE 5: SISTEM PENILAIAN, CP/TP & BOBOT EVALUASI
+  // ===========================================================================
+
+  public getAssessmentComponents(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      subjectId?: string;
+      classId?: string;
+      academicYearId?: string;
+      semesterId?: string;
+    },
+    filterParams?: {
+      subjectId?: string;
+      classId?: string;
+      academicYearId?: string;
+      semesterId?: string;
+    }
+  ): AssessmentComponent[] {
+    let list = [...this.state.assessmentComponents];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((c) => c.tenantId === tenantIdOrParams);
+      if (filterParams?.subjectId) list = list.filter((c) => c.subjectId === filterParams.subjectId);
+      if (filterParams?.classId) list = list.filter((c) => !c.classId || c.classId === filterParams.classId);
+      if (filterParams?.academicYearId) list = list.filter((c) => c.academicYearId === filterParams.academicYearId);
+      if (filterParams?.semesterId) list = list.filter((c) => c.semesterId === filterParams.semesterId);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((c) => c.tenantId === params.tenantId);
+    if (params?.subjectId) list = list.filter((c) => c.subjectId === params.subjectId);
+    if (params?.classId) list = list.filter((c) => !c.classId || c.classId === params.classId);
+    if (params?.academicYearId) list = list.filter((c) => c.academicYearId === params.academicYearId);
+    if (params?.semesterId) list = list.filter((c) => c.semesterId === params.semesterId);
+    return list;
+  }
+
+  public getAssessmentComponentById(id: string): AssessmentComponent | undefined {
+    return this.state.assessmentComponents.find((c) => c.id === id);
+  }
+
+  public createAssessmentComponent(
+    data: Omit<AssessmentComponent, 'id' | 'createdAt' | 'updatedAt'>,
+    user?: User | null
+  ): AssessmentComponent {
+    const now = new Date().toISOString();
+    const newComp: AssessmentComponent = {
+      ...data,
+      id: generateId('comp'),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.state.assessmentComponents.push(newComp);
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'ASSESSMENT_COMPONENT_CREATE',
+      entity: 'ASSESSMENT',
+      entityId: newComp.id,
+      details: `Menambah komponen penilaian ${data.name} (Bobot: ${data.weight}%) pada ${data.subjectName || data.subjectId}`,
+    });
+
+    this.saveState();
+    return newComp;
+  }
+
+  public updateAssessmentComponent(
+    id: string,
+    data: Partial<AssessmentComponent>,
+    user?: User | null
+  ): AssessmentComponent | null {
+    const idx = this.state.assessmentComponents.findIndex((c) => c.id === id);
+    if (idx === -1) return null;
+
+    this.state.assessmentComponents[idx] = {
+      ...this.state.assessmentComponents[idx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveState();
+    return this.state.assessmentComponents[idx];
+  }
+
+  public deleteAssessmentComponent(id: string, user?: User | null): boolean {
+    const idx = this.state.assessmentComponents.findIndex((c) => c.id === id);
+    if (idx === -1) return false;
+
+    // Hapus juga nilai-nilai yang terikat pada komponen ini
+    this.state.studentAssessments = this.state.studentAssessments.filter((sa) => sa.componentId !== id);
+    this.state.assessmentComponents.splice(idx, 1);
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'ASSESSMENT_COMPONENT_DELETE',
+      entity: 'ASSESSMENT',
+      entityId: id,
+      details: `Menghapus komponen penilaian ID ${id}`,
+    });
+
+    this.saveState();
+    return true;
+  }
+
+  public getStudentAssessments(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      componentId?: string;
+      studentId?: string;
+    },
+    filterParams?: {
+      componentId?: string;
+      studentId?: string;
+    }
+  ): StudentAssessment[] {
+    let list = [...this.state.studentAssessments];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((sa) => sa.tenantId === tenantIdOrParams);
+      if (filterParams?.componentId) list = list.filter((sa) => sa.componentId === filterParams.componentId);
+      if (filterParams?.studentId) list = list.filter((sa) => sa.studentId === filterParams.studentId);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((sa) => sa.tenantId === params.tenantId);
+    if (params?.componentId) list = list.filter((sa) => sa.componentId === params.componentId);
+    if (params?.studentId) list = list.filter((sa) => sa.studentId === params.studentId);
+    return list;
+  }
+
+  public upsertStudentAssessment(
+    data: {
+      tenantId: string;
+      componentId: string;
+      studentId: string;
+      score: number;
+      feedback?: string;
+    },
+    user?: User | null,
+    revisionReason?: string
+  ): StudentAssessment {
+    if (data.score < 0 || data.score > 100) {
+      throw new Error('Nilai harus berada dalam rentang angka 0 hingga 100.');
+    }
+
+    const comp = this.getAssessmentComponentById(data.componentId);
+    if (!comp) throw new Error('Komponen penilaian tidak ditemukan.');
+
+    // Validasi penugasan guru: guru hanya dapat menginput nilai untuk mapel yang diampunya
+    if (user && user.role === 'GURU') {
+      const teacherProfile = this.getTeacherProfileByUserId(user.id);
+      if (teacherProfile) {
+        const assignments = this.getTeachingAssignments(data.tenantId).filter(
+          (a) => a.teacherId === teacherProfile.id && a.subjectId === comp.subjectId
+        );
+        if (assignments.length === 0) {
+          throw new Error('Pendidik tidak memiliki kewenangan menginput nilai mata pelajaran ini.');
+        }
+      }
+    }
+
+    const existingIdx = this.state.studentAssessments.findIndex(
+      (sa) => sa.componentId === data.componentId && sa.studentId === data.studentId
+    );
+
+    const now = new Date().toISOString();
+    const student = this.getStudentProfileById(data.studentId);
+    const studentName = student?.fullName || student?.name;
+
+    if (existingIdx !== -1) {
+      const existing = this.state.studentAssessments[existingIdx];
+
+      // Kunci nilai (Lock mechanism)
+      if (existing.isLocked) {
+        throw new Error('Nilai telah dikunci dan tidak dapat diubah tanpa izin revisi.');
+      }
+
+      // Catat revisi nilai jika ada perubahan skor
+      if (existing.score !== data.score) {
+        const revision: GradeRevision = {
+          id: generateId('gr'),
+          tenantId: data.tenantId,
+          studentAssessmentId: existing.id,
+          studentId: data.studentId,
+          componentId: data.componentId,
+          oldScore: existing.score,
+          newScore: data.score,
+          reason: revisionReason || 'Koreksi nilai hasil evaluasi belajar oleh pengajar',
+          changedBy: user?.id || 'system',
+          changedByName: user?.name || 'Administrator',
+          createdAt: now,
+        };
+        this.state.gradeRevisions.unshift(revision);
+      }
+
+      this.state.studentAssessments[existingIdx] = {
+        ...existing,
+        score: Number(data.score.toFixed(2)),
+        feedback: data.feedback !== undefined ? data.feedback : existing.feedback,
+        gradedBy: user?.id || existing.gradedBy,
+        gradedAt: now,
+        updatedAt: now,
+      };
+
+      this.saveState();
+      return this.state.studentAssessments[existingIdx];
+    } else {
+      const newAssessment: StudentAssessment = {
+        id: generateId('sa-comp'),
+        tenantId: data.tenantId,
+        componentId: data.componentId,
+        studentId: data.studentId,
+        studentName,
+        score: Number(data.score.toFixed(2)),
+        feedback: data.feedback,
+        isLocked: false,
+        gradedBy: user?.id,
+        gradedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      this.state.studentAssessments.push(newAssessment);
+      this.saveState();
+      return newAssessment;
+    }
+  }
+
+  public bulkSaveStudentAssessments(
+    componentId: string,
+    scores: { studentId: string; score: number; feedback?: string }[],
+    user?: User | null
+  ): StudentAssessment[] {
+    const comp = this.getAssessmentComponentById(componentId);
+    if (!comp) throw new Error('Komponen penilaian tidak ditemukan.');
+
+    const results: StudentAssessment[] = [];
+    scores.forEach((s) => {
+      const res = this.upsertStudentAssessment(
+        {
+          tenantId: comp.tenantId,
+          componentId,
+          studentId: s.studentId,
+          score: s.score,
+          feedback: s.feedback,
+        },
+        user
+      );
+      results.push(res);
+    });
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'GRADE_BULK_INPUT',
+      entity: 'ASSESSMENT',
+      entityId: componentId,
+      details: `Input massal nilai ${comp.name} untuk ${scores.length} peserta didik`,
+    });
+
+    this.saveState();
+    return results;
+  }
+
+  public lockAssessmentGrades(componentId: string, locked: boolean, user?: User | null): boolean {
+    const now = new Date().toISOString();
+    let updatedCount = 0;
+
+    this.state.studentAssessments.forEach((sa) => {
+      if (sa.componentId === componentId) {
+        sa.isLocked = locked;
+        sa.lockedBy = locked ? user?.id : undefined;
+        sa.lockedAt = locked ? now : undefined;
+        sa.updatedAt = now;
+        updatedCount++;
+      }
+    });
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: locked ? 'GRADE_LOCK' : 'GRADE_UNLOCK',
+      entity: 'ASSESSMENT',
+      entityId: componentId,
+      details: `${locked ? 'Mengunci' : 'Membuka kunci'} nilai komponen ${componentId} (${updatedCount} catatan)`,
+    });
+
+    this.saveState();
+    return true;
+  }
+
+  public toggleLockAssessment(componentId: string, locked: boolean, user?: User | null): boolean {
+    return this.lockAssessmentGrades(componentId, locked, user);
+  }
+
+  public getGradeRevisions(params?: {
+    tenantId?: string;
+    componentId?: string;
+    studentId?: string;
+  }): GradeRevision[] {
+    let list = [...this.state.gradeRevisions];
+    if (params?.tenantId) list = list.filter((gr) => gr.tenantId === params.tenantId);
+    if (params?.componentId) list = list.filter((gr) => gr.componentId === params.componentId);
+    if (params?.studentId) list = list.filter((gr) => gr.studentId === params.studentId);
+    return list;
+  }
+
+  public calculateStudentFinalSubjectGrade(
+    tenantId: string,
+    subjectId: string,
+    studentId: string,
+    classId?: string,
+    academicYearId?: string,
+    semesterId?: string
+  ) {
+    const components = this.getAssessmentComponents({
+      tenantId,
+      subjectId,
+      classId,
+      academicYearId,
+      semesterId,
+    });
+
+    if (components.length === 0) {
+      return { finalScore: 0, letterGrade: 'E', predicate: 'Belum Ada Penilaian', totalWeight: 0, isPassed: false };
+    }
+
+    let weightedScoreSum = 0;
+    let totalWeight = 0;
+
+    components.forEach((c) => {
+      const assessment = this.state.studentAssessments.find(
+        (sa) => sa.componentId === c.id && sa.studentId === studentId
+      );
+      if (assessment !== undefined) {
+        weightedScoreSum += assessment.score * c.weight;
+        totalWeight += c.weight;
+      }
+    });
+
+    const finalScore = totalWeight > 0 ? Number((weightedScoreSum / totalWeight).toFixed(2)) : 0;
+    const subj = this.state.subjects.find((s) => s.id === subjectId);
+    const kkm = subj?.minPassingGrade || 75;
+
+    let letterGrade = 'E';
+    let predicate = 'Perlu Pendampingan';
+
+    if (finalScore >= 85) {
+      letterGrade = 'A';
+      predicate = 'Sangat Baik';
+    } else if (finalScore >= 75) {
+      letterGrade = 'B';
+      predicate = 'Baik';
+    } else if (finalScore >= 60) {
+      letterGrade = 'C';
+      predicate = 'Cukup';
+    } else if (finalScore >= 50) {
+      letterGrade = 'D';
+      predicate = 'Kurang';
+    } else {
+      letterGrade = 'E';
+      predicate = 'Sangat Kurang';
+    }
+
+    return {
+      finalScore,
+      letterGrade,
+      predicate,
+      totalWeight,
+      isPassed: finalScore >= kkm,
+      kkm,
+    };
+  }
+
+  // ===========================================================================
+  // PHASE 5: BANK SOAL EVALUASI & UJIAN ONLINE
+  // ===========================================================================
+
+  public getQuestionBanks(
+    tenantIdOrParams?: string | { tenantId?: string; subjectId?: string },
+    subjectIdParam?: string
+  ): QuestionBank[] {
+    let list = [...this.state.questionBanks];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((b) => b.tenantId === tenantIdOrParams);
+      if (subjectIdParam) list = list.filter((b) => b.subjectId === subjectIdParam);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((b) => b.tenantId === params.tenantId);
+    if (params?.subjectId) list = list.filter((b) => b.subjectId === params.subjectId);
+    return list;
+  }
+
+  public getQuestionBankById(id: string): QuestionBank | undefined {
+    return this.state.questionBanks.find((b) => b.id === id);
+  }
+
+  public createQuestionBank(
+    data: Omit<QuestionBank, 'id' | 'totalQuestions' | 'createdAt' | 'updatedAt'>,
+    user?: User | null
+  ): QuestionBank {
+    const now = new Date().toISOString();
+    const newBank: QuestionBank = {
+      ...data,
+      id: generateId('qb'),
+      totalQuestions: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.state.questionBanks.unshift(newBank);
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'QUESTION_BANK_CREATE',
+      entity: 'QUESTION_BANK',
+      entityId: newBank.id,
+      details: `Membuat Bank Soal ${data.name} untuk mapel ${data.subjectName || data.subjectId}`,
+    });
+
+    this.saveState();
+    return newBank;
+  }
+
+  public updateQuestionBank(
+    id: string,
+    data: Partial<QuestionBank>,
+    user?: User | null
+  ): QuestionBank | null {
+    const idx = this.state.questionBanks.findIndex((b) => b.id === id);
+    if (idx === -1) return null;
+
+    this.state.questionBanks[idx] = {
+      ...this.state.questionBanks[idx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveState();
+    return this.state.questionBanks[idx];
+  }
+
+  public deleteQuestionBank(id: string, user?: User | null): boolean {
+    const idx = this.state.questionBanks.findIndex((b) => b.id === id);
+    if (idx === -1) return false;
+
+    // Hapus butir soal di bank ini
+    this.state.questions = this.state.questions.filter((q) => q.bankId !== id);
+    this.state.questionBanks.splice(idx, 1);
+
+    this.saveState();
+    return true;
+  }
+
+  public getQuestions(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      bankId?: string;
+      subjectId?: string;
+      gradeLevel?: string;
+    },
+    bankIdParam?: string
+  ): Question[] {
+    let list = [...this.state.questions];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((q) => q.tenantId === tenantIdOrParams);
+      if (bankIdParam) list = list.filter((q) => q.bankId === bankIdParam);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((q) => q.tenantId === params.tenantId);
+    if (params?.bankId) list = list.filter((q) => q.bankId === params.bankId);
+    if (params?.subjectId) list = list.filter((q) => q.subjectId === params.subjectId);
+    if (params?.gradeLevel) list = list.filter((q) => q.gradeLevel === params.gradeLevel);
+    return list;
+  }
+
+  public getQuestionById(id: string): Question | undefined {
+    return this.state.questions.find((q) => q.id === id);
+  }
+
+  public createQuestion(
+    data: Omit<Question, 'id' | 'createdAt' | 'updatedAt'>,
+    user?: User | null
+  ): Question {
+    const now = new Date().toISOString();
+    const newQ: Question = {
+      ...data,
+      id: generateId('q'),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.state.questions.push(newQ);
+
+    // Update total questions in bank
+    if (data.bankId) {
+      const bank = this.getQuestionBankById(data.bankId);
+      if (bank) {
+        bank.totalQuestions = (bank.totalQuestions || 0) + 1;
+        bank.updatedAt = now;
+      }
+    }
+
+    this.saveState();
+    return newQ;
+  }
+
+  public updateQuestion(id: string, data: Partial<Question>, user?: User | null): Question | null {
+    const idx = this.state.questions.findIndex((q) => q.id === id);
+    if (idx === -1) return null;
+
+    this.state.questions[idx] = {
+      ...this.state.questions[idx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveState();
+    return this.state.questions[idx];
+  }
+
+  public deleteQuestion(id: string, user?: User | null): boolean {
+    const idx = this.state.questions.findIndex((q) => q.id === id);
+    if (idx === -1) return false;
+
+    const q = this.state.questions[idx];
+    if (q.bankId) {
+      const bank = this.getQuestionBankById(q.bankId);
+      if (bank && bank.totalQuestions > 0) {
+        bank.totalQuestions -= 1;
+      }
+    }
+
+    this.state.questions.splice(idx, 1);
+    this.saveState();
+    return true;
+  }
+
+  // ===========================================================================
+  // PHASE 5: EVALUASI & PELAKSANAAN UJIAN (ONLINE / OFFLINE)
+  // ===========================================================================
+
+  public getExaminations(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      classId?: string;
+      subjectId?: string;
+      status?: ExamStatus;
+    },
+    filterParams?: {
+      classId?: string;
+      subjectId?: string;
+      status?: ExamStatus;
+    }
+  ): Examination[] {
+    let list = [...this.state.examinations];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((e) => e.tenantId === tenantIdOrParams);
+      if (filterParams?.classId) list = list.filter((e) => (e.classIds || []).includes(filterParams.classId!));
+      if (filterParams?.subjectId) list = list.filter((e) => e.subjectId === filterParams.subjectId);
+      if (filterParams?.status) list = list.filter((e) => e.status === filterParams.status);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((e) => e.tenantId === params.tenantId);
+    if (params?.classId) list = list.filter((e) => (e.classIds || []).includes(params.classId!));
+    if (params?.subjectId) list = list.filter((e) => e.subjectId === params.subjectId);
+    if (params?.status) list = list.filter((e) => e.status === params.status);
+    return list;
+  }
+
+  public getExaminationById(id: string): Examination | undefined {
+    return this.state.examinations.find((e) => e.id === id);
+  }
+
+  public createExamination(
+    data: Omit<Examination, 'id' | 'createdAt' | 'updatedAt'>,
+    user?: User | null
+  ): Examination {
+    const now = new Date().toISOString();
+    const newExam: Examination = {
+      ...data,
+      id: generateId('exam'),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.state.examinations.unshift(newExam);
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'EXAMINATION_CREATE',
+      entity: 'EXAMINATION',
+      entityId: newExam.id,
+      details: `Menjadwalkan ujian ${data.title} (${data.mode}) durasi ${data.durationMinutes} menit`,
+    });
+
+    this.saveState();
+    return newExam;
+  }
+
+  public updateExamination(
+    id: string,
+    data: Partial<Examination>,
+    user?: User | null
+  ): Examination | null {
+    const idx = this.state.examinations.findIndex((e) => e.id === id);
+    if (idx === -1) return null;
+
+    this.state.examinations[idx] = {
+      ...this.state.examinations[idx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveState();
+    return this.state.examinations[idx];
+  }
+
+  public deleteExamination(id: string, user?: User | null): boolean {
+    const idx = this.state.examinations.findIndex((e) => e.id === id);
+    if (idx === -1) return false;
+
+    this.state.examSubmissions = this.state.examSubmissions.filter((s) => s.examId !== id);
+    this.state.examinations.splice(idx, 1);
+    this.saveState();
+    return true;
+  }
+
+  public getExamSubmissions(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      examId?: string;
+      studentId?: string;
+    },
+    examIdParam?: string,
+    studentIdParam?: string
+  ): ExamSubmission[] {
+    let list = [...this.state.examSubmissions];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((s) => s.tenantId === tenantIdOrParams);
+      if (examIdParam) list = list.filter((s) => s.examId === examIdParam);
+      if (studentIdParam) list = list.filter((s) => s.studentId === studentIdParam);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((s) => s.tenantId === params.tenantId);
+    if (params?.examId) list = list.filter((s) => s.examId === params.examId);
+    if (params?.studentId) list = list.filter((s) => s.studentId === params.studentId);
+    return list;
+  }
+
+  public getExamSubmissionById(id: string): ExamSubmission | undefined {
+    return this.state.examSubmissions.find((s) => s.id === id);
+  }
+
+  public startExamSubmission(examId: string, studentId: string, user?: User | null): ExamSubmission {
+    const exam = this.getExaminationById(examId);
+    if (!exam) throw new Error('Ujian tidak ditemukan');
+
+    // Cek apakah sudah pernah memulai atau submit
+    const existing = this.state.examSubmissions.find(
+      (s) => s.examId === examId && s.studentId === studentId
+    );
+    if (existing) return existing;
+
+    const student = this.getStudentProfileById(studentId);
+    const now = new Date().toISOString();
+
+    const newSub: ExamSubmission = {
+      id: generateId('sub'),
+      tenantId: exam.tenantId,
+      examId,
+      examTitle: exam.title,
+      studentId,
+      studentName: student?.fullName || student?.name,
+      startedAt: now,
+      answers: {},
+      status: 'IN_PROGRESS',
+    };
+
+    this.state.examSubmissions.push(newSub);
+    this.saveState();
+    return newSub;
+  }
+
+  public submitExam(
+    submissionIdOrPayload: string | {
+      tenantId?: string;
+      examId: string;
+      studentId: string;
+      answers: any[] | Record<string, any>;
+      durationSeconds?: number;
+    },
+    answersOrUser?: Record<string, ExamAnswer> | User | null,
+    durationSeconds?: number,
+    userParam?: User | null
+  ): ExamSubmission {
+    let sub: ExamSubmission;
+    let answers: Record<string, ExamAnswer> = {};
+    let user: User | null | undefined;
+    const duration = durationSeconds || 3600;
+
+    if (typeof submissionIdOrPayload === 'string') {
+      const idx = this.state.examSubmissions.findIndex((s) => s.id === submissionIdOrPayload);
+      if (idx === -1) throw new Error('Lembar pengerjaan ujian tidak ditemukan');
+      sub = this.state.examSubmissions[idx];
+      answers = (answersOrUser as Record<string, ExamAnswer>) || {};
+      user = userParam;
+    } else {
+      const payload = submissionIdOrPayload;
+      user = answersOrUser as (User | null | undefined);
+      let existing = this.state.examSubmissions.find(
+        (s) => s.examId === payload.examId && s.studentId === payload.studentId
+      );
+      if (!existing) {
+        existing = this.startExamSubmission(payload.examId, payload.studentId, user);
+      }
+      sub = existing;
+      if (Array.isArray(payload.answers)) {
+        payload.answers.forEach((a: any) => {
+          answers[a.questionId] = {
+            questionId: a.questionId,
+            selectedOptionIds: a.answer ? [a.answer] : undefined,
+            textAnswer: typeof a.answer === 'string' ? a.answer : undefined,
+          };
+        });
+      } else {
+        answers = payload.answers || {};
+      }
+    }
+
+    const exam = this.getExaminationById(sub.examId);
+    if (!exam) throw new Error('Data ujian tidak valid');
+
+    const now = new Date().toISOString();
+    let objectiveScore = 0;
+    let essayScore = 0;
+    const gradedAnswers: Record<string, ExamAnswer> = {};
+
+    const qIds = exam.questionIds || [];
+    qIds.forEach((qId) => {
+      const q = this.getQuestionById(qId);
+      const studentAns = answers[qId] || {};
+
+      if (!q) {
+        gradedAnswers[qId] = studentAns;
+        return;
+      }
+
+      const weight = q.scoreWeight || q.points || 10;
+
+      if (q.questionType === 'PILIHAN_GANDA' || q.questionType === 'BENAR_SALAH') {
+        const selectedId = studentAns.selectedOptionIds?.[0];
+        const correctOpt = q.options?.find((o: any) => o.isCorrect);
+        const correctAns = q.correctAnswer || (correctOpt ? correctOpt.id : undefined);
+        const isCorrect = selectedId && (selectedId === correctAns || (correctOpt && selectedId === correctOpt.id));
+        const scoreEarned = isCorrect ? weight : 0;
+        objectiveScore += scoreEarned;
+
+        gradedAnswers[qId] = {
+          ...studentAns,
+          questionId: qId,
+          isCorrect: !!isCorrect,
+          scoreEarned,
+        };
+      } else if (q.questionType === 'PILIHAN_GANDA_KOMPLEKS') {
+        const correctIds = q.correctAnswers || q.options?.filter((o: any) => o.isCorrect).map((o: any) => o.id) || [];
+        const studentSelected = studentAns.selectedOptionIds || [];
+        const isExactMatch =
+          correctIds.length === studentSelected.length &&
+          correctIds.every((id: any) => studentSelected.includes(id));
+        const scoreEarned = isExactMatch ? weight : 0;
+        objectiveScore += scoreEarned;
+
+        gradedAnswers[qId] = {
+          ...studentAns,
+          questionId: qId,
+          isCorrect: isExactMatch,
+          scoreEarned,
+        };
+      } else if (q.questionType === 'MENJODOHKAN') {
+        objectiveScore += weight;
+        gradedAnswers[qId] = {
+          ...studentAns,
+          questionId: qId,
+          isCorrect: true,
+          scoreEarned: weight,
+        };
+      } else if (q.questionType === 'ESAI') {
+        const score = studentAns.scoreEarned || 0;
+        gradedAnswers[qId] = {
+          ...studentAns,
+          questionId: qId,
+          isCorrect: undefined,
+          scoreEarned: score,
+        };
+        essayScore += score;
+      } else {
+        gradedAnswers[qId] = studentAns;
+      }
+    });
+
+    const totalScore = Number((objectiveScore + essayScore).toFixed(2));
+    const isPassed = totalScore >= exam.passingGrade;
+
+    const subIdx = this.state.examSubmissions.findIndex((s) => s.id === sub.id);
+    this.state.examSubmissions[subIdx] = {
+      ...sub,
+      submittedAt: now,
+      durationSeconds: duration,
+      answers: gradedAnswers,
+      objectiveScore,
+      essayScore,
+      totalScore,
+      isPassed,
+      status: 'GRADED',
+      updatedAt: now,
+    };
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'EXAM_SUBMISSION_FINALIZE',
+      entity: 'EXAMINATION',
+      entityId: sub.id,
+      details: `Menyelesaikan ujian ${exam.title}. Skor Akhir: ${totalScore} (Lulus: ${isPassed ? 'Ya' : 'Tidak'})`,
+    });
+
+    this.saveState();
+    return this.state.examSubmissions[subIdx];
+  }
+
+  public gradeEssayAnswer(
+    submissionId: string,
+    questionId: string,
+    scoreEarned: number,
+    feedback?: string,
+    user?: User | null
+  ): ExamSubmission | null {
+    const idx = this.state.examSubmissions.findIndex((s) => s.id === submissionId);
+    if (idx === -1) return null;
+
+    const sub = this.state.examSubmissions[idx];
+    const exam = this.getExaminationById(sub.examId);
+
+    const answers = { ...sub.answers };
+    answers[questionId] = {
+      ...answers[questionId],
+      scoreEarned,
+      gradedFeedback: feedback,
+    };
+
+    let totalEssay = 0;
+    Object.values(answers).forEach((ans: any) => {
+      const q = this.getQuestionById(ans.questionId);
+      if (q?.questionType === 'ESAI') {
+        totalEssay += ans.scoreEarned || 0;
+      }
+    });
+
+    const objScore = sub.objectiveScore || 0;
+    const totalScore = Number((objScore + totalEssay).toFixed(2));
+    const isPassed = exam ? totalScore >= exam.passingGrade : false;
+
+    this.state.examSubmissions[idx] = {
+      ...sub,
+      answers,
+      essayScore: totalEssay,
+      totalScore,
+      isPassed,
+      gradedBy: user?.id,
+      gradedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveState();
+    return this.state.examSubmissions[idx];
+  }
+
+  public gradeExamSubmissionManual(
+    tenantId: string,
+    submissionId: string,
+    newFinalScore: number,
+    isPassed: boolean,
+    feedback: string,
+    user?: User | null
+  ): ExamSubmission | null {
+    const idx = this.state.examSubmissions.findIndex((s) => s.id === submissionId);
+    if (idx === -1) return null;
+    this.state.examSubmissions[idx] = {
+      ...this.state.examSubmissions[idx],
+      totalScore: newFinalScore,
+      isPassed,
+      feedback,
+      status: 'GRADED',
+      gradedBy: user?.id,
+      gradedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.saveState();
+    return this.state.examSubmissions[idx];
+  }
+
+  // ===========================================================================
+  // PHASE 5: RAPOR SEKOLAH (K-12: SD, SMP, SMA, SMK)
+  // ===========================================================================
+
+  public getReportCards(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      classId?: string;
+      studentId?: string;
+      academicYearId?: string;
+      semesterId?: string;
+      status?: ReportCardStatus;
+    },
+    filterParams?: {
+      classId?: string;
+      studentId?: string;
+      academicYearId?: string;
+      semesterId?: string;
+      status?: ReportCardStatus;
+    }
+  ): ReportCard[] {
+    let list = [...this.state.reportCards];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((r) => r.tenantId === tenantIdOrParams);
+      if (filterParams?.classId) list = list.filter((r) => r.classId === filterParams.classId);
+      if (filterParams?.studentId) list = list.filter((r) => r.studentId === filterParams.studentId);
+      if (filterParams?.academicYearId) list = list.filter((r) => r.academicYearId === filterParams.academicYearId);
+      if (filterParams?.semesterId) list = list.filter((r) => r.semesterId === filterParams.semesterId);
+      if (filterParams?.status) list = list.filter((r) => r.status === filterParams.status);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((r) => r.tenantId === params.tenantId);
+    if (params?.classId) list = list.filter((r) => r.classId === params.classId);
+    if (params?.studentId) list = list.filter((r) => r.studentId === params.studentId);
+    if (params?.academicYearId) list = list.filter((r) => r.academicYearId === params.academicYearId);
+    if (params?.semesterId) list = list.filter((r) => r.semesterId === params.semesterId);
+    if (params?.status) list = list.filter((r) => r.status === params.status);
+    return list;
+  }
+
+  public upsertReportCard(data: any, user?: User | null): ReportCard {
+    const existingIdx = this.state.reportCards.findIndex(
+      (r) =>
+        r.tenantId === data.tenantId &&
+        r.studentId === data.studentId &&
+        r.academicYearId === data.academicYearId
+    );
+    const now = new Date().toISOString();
+    const item: ReportCard = {
+      id: existingIdx !== -1 ? this.state.reportCards[existingIdx].id : generateId('rc'),
+      createdAt: existingIdx !== -1 ? this.state.reportCards[existingIdx].createdAt : now,
+      updatedAt: now,
+      ...data,
+      grades: data.grades || [],
+    };
+    if (existingIdx !== -1) {
+      this.state.reportCards[existingIdx] = item;
+    } else {
+      this.state.reportCards.unshift(item);
+    }
+    this.saveState();
+    return item;
+  }
+
+  public getReportCardById(id: string): ReportCard | undefined {
+    return this.state.reportCards.find((r) => r.id === id);
+  }
+
+  public generateReportCard(
+    data: {
+      tenantId: string;
+      studentId: string;
+      classId: string;
+      academicYearId: string;
+      semesterId: string;
+    },
+    user?: User | null
+  ): ReportCard {
+    const student = this.getStudentProfileById(data.studentId);
+    const cls = this.getAcademicClassById(data.classId);
+    const ay = this.state.academicYears.find((y) => y.id === data.academicYearId);
+    const term = this.state.academicTerms.find((t) => t.id === data.semesterId);
+    const settings = this.getSettings();
+
+    // Hitung seluruh mata pelajaran pada kelas ini
+    const subjects = this.getSubjects(data.tenantId);
+    const items: ReportCardItem[] = [];
+
+    subjects.forEach((subj) => {
+      const gradeResult = this.calculateStudentFinalSubjectGrade(
+        data.tenantId,
+        subj.id,
+        data.studentId,
+        data.classId,
+        data.academicYearId,
+        data.semesterId
+      );
+
+      items.push({
+        subjectId: subj.id,
+        subjectName: subj.name,
+        subjectCode: subj.code,
+        kkm: gradeResult.kkm,
+        finalScore: gradeResult.finalScore,
+        letterGrade: gradeResult.letterGrade,
+        predicate: gradeResult.predicate,
+        competencyAchievement:
+          gradeResult.finalScore >= 85
+            ? `Menunjukkan pemahaman sangat baik dan menguasai seluruh tujuan pembelajaran mata pelajaran ${subj.name}.`
+            : `Mampu mencapai kompetensi dasar dengan baik dan tuntas pada mata pelajaran ${subj.name}.`,
+      });
+    });
+
+    // Hitung rekap presensi
+    const attRecap = this.getStudentAttendanceRecap({
+      tenantId: data.tenantId,
+      classId: data.classId,
+      studentId: data.studentId,
+      academicYearId: data.academicYearId,
+      semesterId: data.semesterId,
+    });
+
+    const now = new Date().toISOString();
+    const existingIdx = this.state.reportCards.findIndex(
+      (r) =>
+        r.tenantId === data.tenantId &&
+        r.studentId === data.studentId &&
+        r.academicYearId === data.academicYearId &&
+        r.semesterId === data.semesterId
+    );
+
+    const homeroom = this.getTeacherProfiles().find((t) => t.id === cls?.homeroomTeacherId);
+
+    const reportCard: ReportCard = {
+      id: existingIdx !== -1 ? this.state.reportCards[existingIdx].id : generateId('rc'),
+      tenantId: data.tenantId,
+      studentId: data.studentId,
+      studentName: student?.fullName || student?.name,
+      nisn: student?.nisn,
+      nis: student?.nis,
+      academicYearId: data.academicYearId,
+      academicYearName: ay?.name || '2026/2027',
+      semesterId: data.semesterId,
+      semesterName: term?.name || 'Ganjil',
+      classId: data.classId,
+      className: cls?.name || 'Rombel',
+      homeroomTeacherId: cls?.homeroomTeacherId || 'tp-1',
+      homeroomTeacherName: homeroom?.fullName || 'Wali Kelas',
+      principalId: 'user-kepsek',
+      principalName: settings.principalName || 'Dra. Hj. Ratna Juwita, M.Pd',
+      status: 'DRAFT',
+      items,
+      extracurriculars: [
+        { name: 'Pramuka & Karakter Kebangsaan', predicate: 'A (Sangat Baik)', notes: 'Tertib dan berjiwa sosial tinggi' },
+      ],
+      achievements: [],
+      attendance: {
+        hadir: attRecap.hadir,
+        sakit: attRecap.sakit,
+        izin: attRecap.izin,
+        alpa: attRecap.alpa,
+        terlambat: attRecap.terlambat,
+      },
+      homeroomNotes: 'Tingkatkan terus ketekunan belajar dan pertahankan akhlak mulia.',
+      principalNotes: 'Selamat atas kemajuan belajar yang dicapai semester ini.',
+      promotionStatus: 'ONGOING',
+      issuedDate: now.split('T')[0],
+      createdAt: existingIdx !== -1 ? this.state.reportCards[existingIdx].createdAt : now,
+      updatedAt: now,
+    };
+
+    if (existingIdx !== -1) {
+      this.state.reportCards[existingIdx] = reportCard;
+    } else {
+      this.state.reportCards.unshift(reportCard);
+    }
+
+    this.saveState();
+    return reportCard;
+  }
+
+  public updateReportCard(
+    id: string,
+    data: Partial<ReportCard>,
+    user?: User | null
+  ): ReportCard | null {
+    const idx = this.state.reportCards.findIndex((r) => r.id === id);
+    if (idx === -1) return null;
+
+    this.state.reportCards[idx] = {
+      ...this.state.reportCards[idx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveState();
+    return this.state.reportCards[idx];
+  }
+
+  public approveReportCard(
+    id: string,
+    approverRole: 'WALI_KELAS' | 'KEPALA_SEKOLAH',
+    user?: User | null
+  ): ReportCard | null {
+    const idx = this.state.reportCards.findIndex((r) => r.id === id);
+    if (idx === -1) return null;
+
+    const now = new Date().toISOString();
+    const current = this.state.reportCards[idx];
+
+    if (approverRole === 'WALI_KELAS') {
+      current.status = 'CHECKED';
+      current.approvedByHomeroomAt = now;
+    } else if (approverRole === 'KEPALA_SEKOLAH') {
+      current.status = 'APPROVED';
+      current.approvedByPrincipalAt = now;
+
+      // Notifikasi ke siswa & orang tua
+      this.createNotification({
+        tenantId: current.tenantId,
+        userId: current.studentId,
+        title: 'Buku Rapor Telah Disahkan',
+        message: `Rapor semester ${current.semesterName} ${current.academicYearName} telah diverifikasi dan disahkan oleh Kepala Sekolah.`,
+        type: 'SUCCESS',
+      });
+    }
+
+    current.updatedAt = now;
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'REPORT_CARD_APPROVE',
+      entity: 'REPORT_CARD',
+      entityId: id,
+      details: `Verifikasi & Pengesahan rapor siswa ${current.studentName} oleh ${approverRole}`,
+    });
+
+    this.saveState();
+    return current;
+  }
+
+  public updateReportCardStatus(
+    id: string,
+    status: ReportCardStatus,
+    user?: User | null
+  ): ReportCard | null {
+    return this.updateReportCard(id, { status }, user);
+  }
+
+  // ===========================================================================
+  // PHASE 5: PERGURUAN TINGGI (KHS, SKS, IPS, IPK, & TRANSKRIP)
+  // ===========================================================================
+
+  public getSemesterResults(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      studentId?: string;
+      academicYearId?: string;
+      semesterId?: string;
+    },
+    studentIdParam?: string
+  ): SemesterResult[] {
+    let list = [...this.state.semesterResults];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((r) => r.tenantId === tenantIdOrParams);
+      if (studentIdParam) list = list.filter((r) => r.studentId === studentIdParam);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((r) => r.tenantId === params.tenantId);
+    if (params?.studentId) list = list.filter((r) => r.studentId === params.studentId);
+    if (params?.academicYearId) list = list.filter((r) => r.academicYearId === params.academicYearId);
+    if (params?.semesterId) list = list.filter((r) => r.semesterId === params.semesterId);
+    return list;
+  }
+
+  public upsertSemesterResult(data: any, user?: User | null): SemesterResult {
+    const existingIdx = this.state.semesterResults.findIndex(
+      (r) =>
+        r.tenantId === data.tenantId &&
+        r.studentId === data.studentId &&
+        r.semesterNumber === data.semesterNumber
+    );
+    const now = new Date().toISOString();
+    const item: SemesterResult = {
+      id: existingIdx !== -1 ? this.state.semesterResults[existingIdx].id : generateId('sr'),
+      createdAt: existingIdx !== -1 ? this.state.semesterResults[existingIdx].createdAt : now,
+      updatedAt: now,
+      ...data,
+    };
+    if (existingIdx !== -1) {
+      this.state.semesterResults[existingIdx] = item;
+    } else {
+      this.state.semesterResults.unshift(item);
+    }
+    this.saveState();
+    return item;
+  }
+
+  public getSemesterResultById(id: string): SemesterResult | undefined {
+    return this.state.semesterResults.find((r) => r.id === id);
+  }
+
+  public calculateAndPublishSemesterResult(
+    tenantId: string,
+    studentId: string,
+    academicYearId: string,
+    semesterId: string,
+    user?: User | null
+  ): SemesterResult {
+    const student = this.getStudentProfileById(studentId);
+    const ay = this.state.academicYears.find((y) => y.id === academicYearId);
+    const term = this.state.academicTerms.find((t) => t.id === semesterId);
+
+    // Ambil mata kuliah kampus
+    let courses = this.getSubjects(tenantId);
+    if (courses.length === 0) courses = this.getSubjects();
+    const items: KHSItem[] = [];
+    let totalSks = 0;
+    let totalQualityPoints = 0;
+
+    courses.forEach((c) => {
+      const sks = c.credits || c.creditHours || 3;
+      const gradeResult = this.calculateStudentFinalSubjectGrade(
+        tenantId,
+        c.id,
+        studentId,
+        undefined,
+        academicYearId,
+        semesterId
+      );
+
+      const numeric = gradeResult.finalScore > 0 ? gradeResult.finalScore : 85;
+
+      let letter: GradeLetter = 'A';
+      let qp = 4.0;
+      if (numeric >= 85) {
+        letter = 'A';
+        qp = 4.0;
+      } else if (numeric >= 80) {
+        letter = 'A-';
+        qp = 3.7;
+      } else if (numeric >= 75) {
+        letter = 'B+';
+        qp = 3.3;
+      } else if (numeric >= 70) {
+        letter = 'B';
+        qp = 3.0;
+      } else if (numeric >= 65) {
+        letter = 'B-';
+        qp = 2.7;
+      } else if (numeric >= 60) {
+        letter = 'C+';
+        qp = 2.3;
+      } else if (numeric >= 55) {
+        letter = 'C';
+        qp = 2.0;
+      } else if (numeric >= 45) {
+        letter = 'D';
+        qp = 1.0;
+      } else {
+        letter = 'E';
+        qp = 0.0;
+      }
+
+      const weightedQp = Number((sks * qp).toFixed(2));
+      totalSks += sks;
+      totalQualityPoints += weightedQp;
+
+      items.push({
+        courseId: c.id,
+        courseCode: c.code,
+        courseName: c.name,
+        sks,
+        numericScore: numeric,
+        letterGrade: letter,
+        qualityPoint: qp,
+        weightedQualityPoint: weightedQp,
+        status: qp >= 2.0 ? 'LULUS' : 'MENGULANG',
+      });
+    });
+
+    const ips = totalSks > 0 ? Number((totalQualityPoints / totalSks).toFixed(2)) : 0;
+    const ipk = ips; // Sederhana untuk 1 semester
+
+    const now = new Date().toISOString();
+    const existingIdx = this.state.semesterResults.findIndex(
+      (r) =>
+        r.tenantId === tenantId &&
+        r.studentId === studentId &&
+        r.academicYearId === academicYearId &&
+        r.semesterId === semesterId
+    );
+
+    const semResult: SemesterResult = {
+      id: existingIdx !== -1 ? this.state.semesterResults[existingIdx].id : generateId('sr'),
+      tenantId,
+      studentId,
+      studentName: student?.fullName || student?.name,
+      nim: student?.nisn || student?.nis || 'NIM-DEFAULT',
+      academicYearId,
+      semesterId,
+      semesterName: term?.name || 'Semester Ganjil',
+      totalSks,
+      totalQualityPoints: Number(totalQualityPoints.toFixed(2)),
+      ips,
+      ipk,
+      cumulativeSks: totalSks,
+      items,
+      status: 'PUBLISHED',
+      createdAt: existingIdx !== -1 ? this.state.semesterResults[existingIdx].createdAt : now,
+      updatedAt: now,
+    };
+
+    if (existingIdx !== -1) {
+      this.state.semesterResults[existingIdx] = semResult;
+    } else {
+      this.state.semesterResults.unshift(semResult);
+    }
+
+    this.saveState();
+    return semResult;
+  }
+
+  public getUniversityTranscripts(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      studentId?: string;
+    },
+    studentIdParam?: string
+  ): UniversityTranscript[] {
+    let list = [...this.state.universityTranscripts];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((t) => t.tenantId === tenantIdOrParams);
+      if (studentIdParam) list = list.filter((t) => t.studentId === studentIdParam);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((t) => t.tenantId === params.tenantId);
+    if (params?.studentId) list = list.filter((t) => t.studentId === params.studentId);
+    return list;
+  }
+
+  public upsertUniversityTranscript(data: any, user?: User | null): UniversityTranscript {
+    const existingIdx = this.state.universityTranscripts.findIndex(
+      (t) => t.tenantId === data.tenantId && t.studentId === data.studentId
+    );
+    const now = new Date().toISOString();
+    const item: UniversityTranscript = {
+      id: existingIdx !== -1 ? this.state.universityTranscripts[existingIdx].id : generateId('tr'),
+      createdAt: existingIdx !== -1 ? this.state.universityTranscripts[existingIdx].createdAt : now,
+      updatedAt: now,
+      ...data,
+    };
+    if (existingIdx !== -1) {
+      this.state.universityTranscripts[existingIdx] = item;
+    } else {
+      this.state.universityTranscripts.unshift(item);
+    }
+    this.saveState();
+    return item;
+  }
+
+  public generateUniversityTranscript(
+    tenantId: string,
+    studentId: string,
+    user?: User | null
+  ): UniversityTranscript {
+    const student = this.getStudentProfileById(studentId);
+    const existingIdx = this.state.universityTranscripts.findIndex(
+      (t) => t.tenantId === tenantId && t.studentId === studentId
+    );
+
+    const now = new Date().toISOString();
+    const transcript: UniversityTranscript = {
+      id: existingIdx !== -1 ? this.state.universityTranscripts[existingIdx].id : generateId('tr'),
+      tenantId,
+      studentId,
+      nim: student?.nisn || student?.nis || '260401001',
+      studentName: student?.fullName || student?.name || 'Mahasiswa',
+      programStudi: 'D4 Teknologi Rekayasa Perangkat Lunak',
+      faculty: 'Teknologi Informasi & Komputer',
+      totalSksEarned: 20,
+      ipkCumulative: 3.84,
+      predicate: 'DENGAN_PUJIAN',
+      issuedDate: now.split('T')[0],
+      isOfficial: true,
+      createdAt: existingIdx !== -1 ? this.state.universityTranscripts[existingIdx].createdAt : now,
+      updatedAt: now,
+    };
+
+    if (existingIdx !== -1) {
+      this.state.universityTranscripts[existingIdx] = transcript;
+    } else {
+      this.state.universityTranscripts.unshift(transcript);
+    }
+
+    this.saveState();
+    return transcript;
+  }
+
+  // ===========================================================================
+  // PHASE 5: KEPUTUSAN AKADEMIK (KENAIKAN KELAS & KELULUSAN)
+  // ===========================================================================
+
+  public getAcademicDecisions(
+    tenantIdOrParams?: string | {
+      tenantId?: string;
+      classId?: string;
+      academicYearId?: string;
+      studentId?: string;
+    },
+    filterParams?: {
+      classId?: string;
+      academicYearId?: string;
+      studentId?: string;
+    }
+  ): AcademicDecision[] {
+    let list = [...this.state.academicDecisions];
+    if (typeof tenantIdOrParams === 'string') {
+      list = list.filter((d) => d.tenantId === tenantIdOrParams);
+      if (filterParams?.classId) list = list.filter((d) => d.classId === filterParams.classId);
+      if (filterParams?.academicYearId) list = list.filter((d) => d.academicYearId === filterParams.academicYearId);
+      if (filterParams?.studentId) list = list.filter((d) => d.studentId === filterParams.studentId);
+      return list;
+    }
+    const params = tenantIdOrParams;
+    if (params?.tenantId) list = list.filter((d) => d.tenantId === params.tenantId);
+    if (params?.classId) list = list.filter((d) => d.classId === params.classId);
+    if (params?.academicYearId) list = list.filter((d) => d.academicYearId === params.academicYearId);
+    if (params?.studentId) list = list.filter((d) => d.studentId === params.studentId);
+    return list;
+  }
+
+  public recordAcademicDecision(
+    data: Omit<AcademicDecision, 'id' | 'createdAt' | 'updatedAt'>,
+    user?: User | null
+  ): AcademicDecision {
+    return this.createAcademicDecision(data, user);
+  }
+
+  public createAcademicDecision(
+    data: Omit<AcademicDecision, 'id' | 'createdAt' | 'updatedAt'>,
+    user?: User | null
+  ): AcademicDecision {
+    const now = new Date().toISOString();
+    const newDec: AcademicDecision = {
+      ...data,
+      id: generateId('dec'),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.state.academicDecisions.unshift(newDec);
+
+    // Update status profil siswa jika kelulusan atau kenaikan kelas
+    const student = this.getStudentProfileById(data.studentId);
+    if (student) {
+      if (data.type === 'GRADUATION' && data.result === 'GRADUATED') {
+        student.status = 'GRADUATED';
+      } else if (data.type === 'PROMOTION' && data.result === 'PROMOTED' && data.targetClassId) {
+        student.currentClassId = data.targetClassId;
+      }
+    }
+
+    this.addAuditLog({
+      userId: user?.id,
+      userName: user?.name,
+      userRole: user?.role,
+      action: 'ACADEMIC_DECISION_COMMIT',
+      entity: 'ACADEMIC_DECISION',
+      entityId: newDec.id,
+      details: `Keputusan pleno: Siswa ${data.studentName} ditetapkan ${data.result} (${data.type})`,
+    });
+
+    this.saveState();
+    return newDec;
+  }
+
+  public updateAcademicDecision(
+    id: string,
+    data: Partial<AcademicDecision>,
+    user?: User | null
+  ): AcademicDecision | null {
+    const idx = this.state.academicDecisions.findIndex((d) => d.id === id);
+    if (idx === -1) return null;
+
+    this.state.academicDecisions[idx] = {
+      ...this.state.academicDecisions[idx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveState();
+    return this.state.academicDecisions[idx];
+  }
+
+  // ===========================================================================
+  // PHASE 5: NOTIFIKASI AKADEMIK INTERNAL
+  // ===========================================================================
+
+  public getNotifications(firstParam?: string, secondParam?: string): Notification[] {
+    let list = [...this.state.notifications];
+    if (!firstParam) return list;
+    if (secondParam) {
+      list = list.filter(
+        (n) =>
+          (n.userId === firstParam && n.tenantId === secondParam) ||
+          (n.tenantId === firstParam && n.userId === secondParam) ||
+          n.userId === firstParam ||
+          n.userId === secondParam
+      );
+    } else {
+      list = list.filter((n) => n.userId === firstParam || n.tenantId === firstParam);
+    }
+    return list;
+  }
+
+  public createNotification(data: Omit<Notification, 'id' | 'read' | 'createdAt'>): Notification {
+    const newNotif: Notification = {
+      ...data,
+      id: generateId('notif'),
+      read: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    this.state.notifications.unshift(newNotif);
+    this.saveState();
+    return newNotif;
+  }
+
+  public markNotificationAsRead(id: string): boolean {
+    const notif = this.state.notifications.find((n) => n.id === id);
+    if (!notif) return false;
+    notif.read = true;
+    this.saveState();
+    return true;
+  }
+
+  public markAllNotificationsAsRead(userId: string): boolean {
+    this.state.notifications.forEach((n) => {
+      if (n.userId === userId) n.read = true;
+    });
+    this.saveState();
+    return true;
+  }
+
+  // ===========================================================================
+  // SEED RESET
+  // ===========================================================================
+
   public resetToSeed(user?: User | null) {
     this.state = {
       settings: { ...INITIAL_SITE_SETTINGS },
@@ -4963,6 +7247,23 @@ class CmsStore {
       scheduleItems: [...INITIAL_SCHEDULE_ITEMS],
       learningDocuments: [...INITIAL_LEARNING_DOCUMENTS],
       academicCalendarEvents: [...INITIAL_ACADEMIC_CALENDAR_EVENTS],
+      // Phase 5 defaults
+      attendanceSessions: [...INITIAL_ATTENDANCE_SESSIONS],
+      studentAttendances: [...INITIAL_STUDENT_ATTENDANCES],
+      staffAttendances: [...INITIAL_STAFF_ATTENDANCES],
+      leaveRequests: [...INITIAL_LEAVE_REQUESTS],
+      assessmentComponents: [...INITIAL_ASSESSMENT_COMPONENTS],
+      studentAssessments: [...INITIAL_STUDENT_ASSESSMENTS],
+      gradeRevisions: [...INITIAL_GRADE_REVISIONS],
+      questionBanks: [...INITIAL_QUESTION_BANKS],
+      questions: [...INITIAL_QUESTIONS],
+      examinations: [...INITIAL_EXAMINATIONS],
+      examSubmissions: [...INITIAL_EXAM_SUBMISSIONS],
+      reportCards: [...INITIAL_REPORT_CARDS],
+      semesterResults: [...INITIAL_SEMESTER_RESULTS],
+      universityTranscripts: [...INITIAL_UNIVERSITY_TRANSCRIPTS],
+      academicDecisions: [...INITIAL_ACADEMIC_DECISIONS],
+      notifications: [...INITIAL_NOTIFICATIONS],
     };
 
     this.addAuditLog({
@@ -4971,7 +7272,7 @@ class CmsStore {
       userRole: user?.role,
       action: 'SYSTEM_RESET_SEED',
       entity: 'SYSTEM',
-      details: 'Mengembalikan seluruh data CMS ke seed bawaan Phase 4 Multi-Tenant & Akademik',
+      details: 'Mengembalikan seluruh data CMS ke seed bawaan Phase 5 Absensi, Penilaian, Ujian, dan Rapor',
     });
 
     this.saveState();
@@ -4979,3 +7280,4 @@ class CmsStore {
 }
 
 export const cmsStore = new CmsStore();
+export const cmsDb = cmsStore;

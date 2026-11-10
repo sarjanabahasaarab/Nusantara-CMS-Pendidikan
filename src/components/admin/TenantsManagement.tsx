@@ -89,14 +89,14 @@ export const TenantsManagement: React.FC<TenantsManagementProps> = ({ onNavigate
     setSelectedTenant(tenant);
     setFormName(tenant.name);
     setFormSlug(tenant.slug);
-    setFormType(tenant.institutionType);
-    setFormCategory(tenant.category);
+    setFormType(tenant.institutionType || (tenant.type as string) || 'SMA');
+    setFormCategory((tenant.category as any) || 'SEKOLAH');
     setFormNpsn(tenant.npsnOrCode || '');
     setFormEmail(tenant.email || '');
     setFormPhone(tenant.phone || '');
     setFormAddress(tenant.address || '');
     setFormCity(tenant.city || '');
-    setFormStatus(tenant.status);
+    setFormStatus((tenant.status as any) || 'ACTIVE');
     setShowModal(true);
   };
 
@@ -290,7 +290,7 @@ export const TenantsManagement: React.FC<TenantsManagementProps> = ({ onNavigate
                       <div
                         className="bg-blue-600 h-full rounded-full"
                         style={{
-                          width: `${Math.min(100, ((usage?.userCount || 10) / sub.maxUsers) * 100)}%`,
+                          width: `${Math.min(100, ((usage?.userCount || 10) / (sub.maxUsers || 100)) * 100)}%`,
                         }}
                       />
                     </div>

@@ -22,7 +22,7 @@ import { cmsStore } from '../../lib/db';
 import { TeachingAssignment, TeacherProfile } from '../../types';
 
 interface TeachingAssignmentsManagementProps {
-  onNavigate: (view: any) => void;
+  onNavigate?: (view: any) => void;
 }
 
 export const TeachingAssignmentsManagement: React.FC<TeachingAssignmentsManagementProps> = ({ onNavigate }) => {
@@ -34,7 +34,7 @@ export const TeachingAssignmentsManagement: React.FC<TeachingAssignmentsManageme
   const [assignments, setAssignments] = useState<TeachingAssignment[]>(
     cmsStore.getTeachingAssignments(tenantId, currentAy?.id)
   );
-  const teachers = cmsStore.getTeachers();
+  const teachers: TeacherProfile[] = cmsStore.getTeachers();
   const classes = cmsStore.getAcademicClasses(tenantId, currentAy?.id);
   const subjects = cmsStore.getSubjects(tenantId);
 
@@ -86,7 +86,7 @@ export const TeachingAssignmentsManagement: React.FC<TeachingAssignmentsManageme
     if (isEditing && selectedId) {
       cmsStore.updateTeachingAssignment(selectedId, {
         teacherId: teacher.id,
-        teacherName: teacher.name,
+        teacherName: teacher.fullName,
         subjectId: subject.id,
         subjectName: subject.name,
         classId: cls.id,
@@ -98,7 +98,7 @@ export const TeachingAssignmentsManagement: React.FC<TeachingAssignmentsManageme
       cmsStore.createTeachingAssignment({
         tenantId,
         teacherId: teacher.id,
-        teacherName: teacher.name,
+        teacherName: teacher.fullName,
         subjectId: subject.id,
         subjectName: subject.name,
         classId: cls.id,
@@ -156,7 +156,7 @@ export const TeachingAssignmentsManagement: React.FC<TeachingAssignmentsManageme
               <div key={teacher.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 space-y-2">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900 line-clamp-1">{teacher.name}</h4>
+                    <h4 className="text-sm font-bold text-slate-900 line-clamp-1">{teacher.fullName}</h4>
                     <p className="text-xs text-slate-400">NIP: {teacher.nip || '-'}</p>
                   </div>
                   <span
@@ -207,7 +207,7 @@ export const TeachingAssignmentsManagement: React.FC<TeachingAssignmentsManageme
           <option value="ALL">Semua Guru Pengampu</option>
           {teachers.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.name}
+              {t.fullName}
             </option>
           ))}
         </select>
@@ -284,7 +284,7 @@ export const TeachingAssignmentsManagement: React.FC<TeachingAssignmentsManageme
                 >
                   {teachers.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.name}
+                      {t.fullName}
                     </option>
                   ))}
                 </select>

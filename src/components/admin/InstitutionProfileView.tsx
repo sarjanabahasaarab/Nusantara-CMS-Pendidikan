@@ -76,7 +76,7 @@ export const InstitutionProfileView: React.FC<InstitutionProfileViewProps> = ({ 
     // 2. Update Site Settings (identitas publik sekolah)
     cmsStore.updateSettings({
       siteName: name,
-      institutionType,
+      institutionType: institutionType as any,
       npsn,
       email,
       phone,

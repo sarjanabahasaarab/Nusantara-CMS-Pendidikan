@@ -23,7 +23,7 @@ import { cmsStore } from '../../lib/db';
 import { AcademicCalendarEvent } from '../../types';
 
 interface AcademicCalendarManagementProps {
-  onNavigate: (view: any) => void;
+  onNavigate?: (view: any) => void;
 }
 
 export const AcademicCalendarManagement: React.FC<AcademicCalendarManagementProps> = ({ onNavigate }) => {
@@ -109,7 +109,7 @@ export const AcademicCalendarManagement: React.FC<AcademicCalendarManagementProp
     } else {
       cmsStore.createAcademicCalendarEvent({
         tenantId,
-        academicYearId: currentAy?.id,
+        academicYearId: currentAy?.id || '',
         title: formTitle,
         category: formCategory,
         startDate: new Date(formStart).toISOString(),

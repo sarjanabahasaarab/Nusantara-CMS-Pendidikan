@@ -22,10 +22,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { cmsStore } from '../../lib/db';
-import { ScheduleItem } from '../../types';
+import { ScheduleItem, TeacherProfile } from '../../types';
 
 interface SchedulingManagementProps {
-  onNavigate: (view: any) => void;
+  onNavigate?: (view: any) => void;
 }
 
 export const SchedulingManagement: React.FC<SchedulingManagementProps> = ({ onNavigate }) => {
@@ -39,7 +39,7 @@ export const SchedulingManagement: React.FC<SchedulingManagementProps> = ({ onNa
   );
 
   const classes = cmsStore.getAcademicClasses(tenantId, currentAy?.id);
-  const teachers = cmsStore.getTeachers();
+  const teachers: TeacherProfile[] = cmsStore.getTeachers();
   const subjects = cmsStore.getSubjects(tenantId);
   const rooms = cmsStore.getRooms(tenantId);
 
@@ -124,7 +124,7 @@ export const SchedulingManagement: React.FC<SchedulingManagementProps> = ({ onNa
         classId: cls.id,
         className: cls.name,
         teacherId: teacher.id,
-        teacherName: teacher.name,
+        teacherName: teacher.fullName,
         subjectId: subject.id,
         subjectName: subject.name,
         roomId: room?.id,
@@ -209,7 +209,7 @@ export const SchedulingManagement: React.FC<SchedulingManagementProps> = ({ onNa
             <option value="ALL">Semua Guru Pengampu</option>
             {teachers.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.name}
+                {t.fullName}
               </option>
             ))}
           </select>
@@ -479,7 +479,7 @@ export const SchedulingManagement: React.FC<SchedulingManagementProps> = ({ onNa
                   >
                     {teachers.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.name}
+                        {t.fullName}
                       </option>
                     ))}
                   </select>

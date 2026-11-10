@@ -25,7 +25,7 @@ import { cmsStore } from '../../lib/db';
 import { LearningDocument, Subject } from '../../types';
 
 interface LearningDocsManagementProps {
-  onNavigate: (view: any) => void;
+  onNavigate?: (view: any) => void;
 }
 
 export const LearningDocsManagement: React.FC<LearningDocsManagementProps> = ({ onNavigate }) => {
@@ -70,8 +70,8 @@ export const LearningDocsManagement: React.FC<LearningDocsManagementProps> = ({ 
   const filteredDocs = docs.filter((doc) => {
     const matchesSearch =
       doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.subjectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.authorName.toLowerCase().includes(searchQuery.toLowerCase());
+      (doc.subjectName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (doc.authorName || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || doc.status === statusFilter;
     const matchesType = typeFilter === 'ALL' || doc.documentType === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
@@ -93,8 +93,10 @@ export const LearningDocsManagement: React.FC<LearningDocsManagementProps> = ({ 
     const subj = subjects.find((s) => s.id === formSubjectId);
     if (!subj || !user) return;
 
+    const currentAy = cmsStore.getActiveAcademicYear(tenantId);
     cmsStore.createLearningDocument({
       tenantId,
+      academicYearId: currentAy?.id || 'ay-default',
       documentType: formType,
       title: formTitle,
       subjectId: subj.id,
@@ -239,7 +241,7 @@ export const LearningDocsManagement: React.FC<LearningDocsManagementProps> = ({ 
               <div>
                 <div className="flex items-start justify-between gap-2">
                   <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
-                    {doc.documentType.replace('_', ' ')}
+                    {(doc.documentType || doc.type || 'MODUL_AJAR').replace('_', ' ')}
                   </span>
                   {statusBadge}
                 </div>
